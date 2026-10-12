@@ -113,6 +113,28 @@ export function keyDatesEl(keyDates, ctx) {
   );
 }
 
+const DOT = { ok: '✓', check: '?', bad: '✕' };
+const DOT_LABEL = { ok: 'Passes', check: 'Check', bad: 'Fails' };
+
+export function badgeEl(verdict) {
+  if (!verdict) return null;
+  return el('span', { class: `pill pill-${verdict.badge}`, text: verdict.label });
+}
+
+/** Eligibility: one row per check, each with a receipt. */
+export function eligibilityEl(verdict) {
+  return el('section', { class: 'section', 'aria-label': 'Eligibility' },
+    el('div', { class: 'section-head' }, el('h3', { class: 'section-title', text: 'Can you enter?' }), badgeEl(verdict)),
+    el('ul', { class: 'rows' }, verdict.rows.map((r) => el('li', { class: 'row' },
+      el('span', { class: `dot dot-${r.status}`, role: 'img', 'aria-label': DOT_LABEL[r.status], text: DOT[r.status] }),
+      el('div', { class: 'row-main' },
+        el('p', { class: 'row-title', text: r.title }),
+        el('p', { class: 'row-detail', text: r.detail })),
+      receiptEl(r.receipt),
+    ))),
+  );
+}
+
 /**
  * The full ticket. `ctx` = { profile, now, sections: [extra section builders], actions: [nodes],
  * onRename(name) }.

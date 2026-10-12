@@ -1,30 +1,57 @@
 // Wiring: events, state, the countdown timer.
 
 import { decodeRules } from './lib/extract.js';
+import { judge } from './lib/judge.js';
+import { createStore } from './lib/store.js';
+import { COUNTRIES } from './lib/countries.js';
 import { COMMON_ZONES, detectTimeZone, countdown, isValidTimeZone } from './lib/time.js';
-import { el, renderTicket, renderExplainer } from './ui/render.js';
+import { el, renderTicket, renderExplainer, eligibilityEl, badgeEl } from './ui/render.js';
 
 const $ = (id) => document.getElementById(id);
 
+const store = createStore(window.localStorage);
 const state = {
-  profile: { country: 'India', age: null, timeZone: detectTimeZone(), inrPerUsd: 88 },
+  profile: store.loadProfile({ timeZone: detectTimeZone() }),
   ticket: null,
 };
+if (!isValidTimeZone(state.profile.timeZone)) state.profile.timeZone = detectTimeZone();
 
 // ---------- Your details ----------
-function fillTimeZones() {
-  const select = $('f-tz');
+function fillDetails() {
+  $('countries').replaceChildren(...COUNTRIES.map((c) => el('option', { value: c })));
   const zones = [...COMMON_ZONES];
   if (!zones.includes(state.profile.timeZone)) zones.unshift(state.profile.timeZone);
-  select.replaceChildren(...zones.map((z) => el('option', { value: z, text: z.replace(/_/g, ' ') })));
-  select.value = state.profile.timeZone;
+  $('f-tz').replaceChildren(...zones.map((z) => el('option', { value: z, text: z.replace(/_/g, ' ') })));
+  $('f-tz').value = state.profile.timeZone;
+  $('f-country').value = state.profile.country || '';
+  $('f-age').value = state.profile.age ?? '';
+  $('f-rate').value = state.profile.inrPerUsd ?? 88;
+}
+
+function readDetails() {
+  const age = parseInt($('f-age').value, 10);
+  const rate = parseFloat($('f-rate').value);
+  const tz = $('f-tz').value;
+  state.profile = {
+    country: $('f-country').value.trim(),
+    age: Number.isFinite(age) && age > 0 ? age : null,
+    timeZone: isValidTimeZone(tz) ? tz : state.profile.timeZone,
+    inrPerUsd: Number.isFinite(rate) && rate > 0 ? rate : 88,
+  };
+  store.saveProfile(state.profile);
+  renderResult();
 }
 
 function bindDetails() {
-  $('f-tz').addEventListener('change', (e) => {
-    if (isValidTimeZone(e.target.value)) state.profile.timeZone = e.target.value;
-    renderResult();
-  });
+  for (const id of ['f-country', 'f-age', 'f-tz', 'f-rate']) {
+    $(id).addEventListener('change', readDetails);
+    if (id !== 'f-tz') $(id).addEventListener('input', debounce(readDetails, 350));
+  }
+}
+
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
 // ---------- Decode ----------
@@ -56,9 +83,12 @@ function renderResult() {
     root.replaceChildren(renderExplainer());
     return;
   }
+  const verdict = judge(state.ticket.eligibility, state.profile);
   root.replaceChildren(renderTicket(state.ticket, {
     profile: state.profile,
     now: Date.now(),
+    badge: badgeEl(verdict),
+    sections: [() => eligibilityEl(verdict)],
     onRename: (name) => { state.ticket.name = name; },
   }));
 }
@@ -75,7 +105,7 @@ function tick() {
 
 // ---------- Start ----------
 function start() {
-  fillTimeZones();
+  fillDetails();
   bindDetails();
   $('decode').addEventListener('click', decode);
   $('rules').addEventListener('keydown', (e) => {

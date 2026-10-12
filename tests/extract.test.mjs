@@ -46,6 +46,41 @@ test('curly quotes, en dashes and non-breaking spaces in pasted text are normali
   assert.equal(new Date(t.deadline.utc).toISOString(), '2026-11-02T16:45:00.000Z');
 });
 
+test('eligibility: "age of majority" reads as 18; the excluded list is found under "IS NOT open to"', () => {
+  const t = decodeRules(DEVPOST_STYLE, { now: NOW });
+  assert.equal(t.eligibility.minAge.value, 18);
+  assert.equal(marked(t.eligibility.minAge.receipt), 'age of majority');
+  assert.ok(t.eligibility.excluded);
+  assert.match(t.eligibility.excluded.receipt.quote, /Brazil, Quebec, Russia, Crimea, Cuba, Iran or North Korea/);
+  assert.equal(marked(t.eligibility.excluded.receipt), 'Brazil, Quebec, Russia, Crimea, Cuba, Iran or North Korea');
+  assert.equal(t.eligibility.restrictedTo, null);
+});
+
+test('excluded-list highlight starts after "including, but not limited to", skipping "laws of the United States"', () => {
+  const text = 'The Hackathon IS NOT open to:\nIndividuals who are residents of, or Organizations domiciled in, a country where the laws of the United States prohibit participating (including, but not limited to, Brazil, Cuba, Iran, and North Korea and any other country sanctioned by the U.S. Treasury).';
+  const t = decodeRules(text, { now: NOW });
+  assert.equal(marked(t.eligibility.excluded.receipt), 'Brazil, Cuba, Iran, and North Korea');
+});
+
+test('eligibility: explicit ages win; "open only to residents of" is a restriction, not an exclusion', () => {
+  const t = decodeRules(US_ONLY, { now: NOW });
+  assert.equal(t.eligibility.minAge.value, 18);
+  assert.ok(t.eligibility.restrictedTo);
+  assert.equal(marked(t.eligibility.restrictedTo.receipt), 'open only to');
+  assert.equal(t.eligibility.excluded, null);
+  assert.equal(t.eligibility.conditions.length, 1);
+});
+
+test('eligibility: number words and "18+" forms', () => {
+  const a = decodeRules('Entrants must be at least eighteen years of age.', { now: NOW });
+  assert.equal(a.eligibility.minAge.value, 18);
+  const b = decodeRules('Who can participate\nAges 18+ only\nAll countries/territories, excluding standard exceptions', { now: NOW });
+  assert.equal(b.eligibility.minAge.value, 18);
+  assert.ok(b.eligibility.overviewNote);
+  const c = decodeRules('Participants must be at least 13 years old.', { now: NOW });
+  assert.equal(c.eligibility.minAge.value, 13);
+});
+
 test('a plain paragraph finds nothing', () => {
   const t = decodeRules(PLAIN_PARAGRAPH, { now: NOW });
   assert.equal(t.deadline, null);

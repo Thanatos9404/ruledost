@@ -3,6 +3,7 @@
 
 import { normalize, toLines, toSentences, makeReceipt } from './text.js';
 import { findDateTimes, toUtc } from './time.js';
+import { placeSpans, stripNonListings } from './countries.js';
 
 const NAV = /^(log in|sign up|login|join hackathon|join a hackathon|hackathons|projects|overview|rules|resources|devpost|descend|my projects|participants( \(\d+\))?|project gallery|updates|discussions|host a hackathon|blog|help desk|schedule|prizes|judges)$/i;
 
@@ -15,13 +16,17 @@ export function decodeRules(raw, { now = Date.now() } = {}) {
 
   const deadline = findDeadline(dated);
   const keyDates = findKeyDates(dated);
+  const eligibility = findEligibility(lines, sentences);
   const ticket = {
     v: 1,
     name: findName(lines),
     deadline,
     keyDates,
+    eligibility,
   };
-  ticket.found = (deadline ? 1 : 0) + keyDates.length;
+  ticket.found = (deadline ? 1 : 0) + keyDates.length
+    + (eligibility.minAge ? 1 : 0) + (eligibility.excluded ? 1 : 0) + (eligibility.restrictedTo ? 1 : 0)
+    + eligibility.conditions.length;
   return ticket;
 }
 
@@ -112,6 +117,140 @@ export function findDeadline(dated) {
     }
   }
   return null;
+}
+
+// ---------- eligibility ----------
+
+const NUMBER_WORDS = {
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16, seventeen: 17,
+  eighteen: 18, nineteen: 19, twenty: 20, 'twenty-one': 21, 'twenty one': 21,
+};
+const AGE_RES = [
+  /\bages?\s+(\d{1,2})\s*\+/i,
+  /\b(\d{1,2})\s*\+\s*only\b/i,
+  /\bat least (?:the age of )?(\d{1,2}|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty(?:[- ]one)?)(?:\s*\(\d{1,2}\))?\s*(?:years|yrs)/i,
+  /\b(\d{1,2}) years (?:of age )?or older\b/i,
+  /\bminimum age (?:is|of) (\d{1,2})\b/i,
+  /\baged? (\d{1,2}) (?:and|or) (?:above|over|older)\b/i,
+];
+
+function findMinAge(sentences) {
+  for (const s of sentences) {
+    for (const re of AGE_RES) {
+      const m = re.exec(s.text);
+      if (!m) continue;
+      const raw = m[1].toLowerCase();
+      const value = /^\d+$/.test(raw) ? Number(raw) : NUMBER_WORDS[raw];
+      if (!(value >= 5 && value <= 30)) continue;
+      return { value, note: `At least ${value} years old.`, receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]) };
+    }
+  }
+  for (const s of sentences) {
+    const m = /\bage of majority\b/i.exec(s.text);
+    if (m && !/\bparent|guardian\b/i.test(s.text)) {
+      return {
+        value: 18,
+        note: '"Age of majority" where you live: 18 in India (it varies by country).',
+        receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]),
+      };
+    }
+  }
+  return null;
+}
+
+const RESTRICT_RE = /\b(?:open only to|only open to|is open to|are open to|open to (?:legal )?residents of|limited to|restricted to|must be (?:a )?(?:legal )?(?:residents?|citizens?) of)\b/i;
+const EXCLUDE_RE = /\b(?:not open to|not eligible|not be (?:a )?residents? of|exclud(?:ing|ed|es)|void (?:in|where)|prohibited)\b/i;
+const CONDITION_RES = [
+  /\bopen only to (?:members|participants|employees|students|developers|individuals who|those who|registered)[^.;]*/i,
+  /\bmust be (?:a |an )?(?:current(?:ly)? )?(?:member|enrolled|employed|student)[^.;]*/i,
+  /\bwho are employed by or authorized to act on behalf of[^.;]*/i,
+  /\b(?:currently )?enrolled (?:full-time |part-time )?(?:students?|in an accredited)[^.;]*/i,
+  /\bhave an active and valid [^.;]*account[^.;]*/i,
+];
+const CONDITION_SKIP = /\b(employees? of (?:the )?(?:sponsor|administrator|organi[sz]er)|immediate family|household|judge|promotion entities|prize|award|bonus|category)\b|^submissions? from\b/i;
+
+function placeCount(text) {
+  return new Set(placeSpans(text).map((p) => p.name)).size;
+}
+
+/** Eligibility facts: minimum age, excluded places, "open only to" places, special conditions. */
+export function findEligibility(lines, sentences) {
+  const minAge = findMinAge(sentences);
+
+  // "Open only to residents of X and Y" (geographic restriction)
+  let restrictedTo = null;
+  let restrictedSentence = null;
+  for (const s of sentences) {
+    const m = RESTRICT_RE.exec(s.text);
+    if (m && !/\bnot\b/i.test(s.text.slice(0, m.index + m[0].length)) && placeCount(s.text) >= 1
+      && /\b(?:resident|citizen|located|living|domiciled)/i.test(s.text)
+      && !/\ball (?:countries|nations)\b|\bworldwide\b|\bglobally\b|\bany country\b|\bexcept\b/i.test(s.text)) {
+      restrictedTo = { receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]) };
+      restrictedSentence = s.text;
+      break;
+    }
+  }
+
+  // Excluded places: a "NOT open to" heading followed by a list, or a sentence that both excludes and names 2+ places.
+  let excluded = null;
+  // Highlight the list itself: from the first named place after the list marker to the last.
+  const listMark = (text) => {
+    let from = 0;
+    for (const re of [/including,? but not limited to,?/i, /following (?:countries|locations|regions|territories)[^:]*:/i, /such as/i, /domiciled in,?/i]) {
+      const marker = re.exec(text);
+      if (marker) { from = marker.index + marker[0].length; break; }
+    }
+    const spans = placeSpans(stripNonListings(text)).filter((p) => p.start >= from);
+    return spans.length ? [spans[0].start, spans[spans.length - 1].end] : null;
+  };
+  for (let i = 0; i < lines.length && !excluded; i++) {
+    if (/\b(?:is|are)\s+not\s+open\s+to\b/i.test(lines[i])) {
+      for (const cand of [lines[i], lines[i + 1], lines[i + 2]].filter(Boolean)) {
+        if (placeCount(cand) >= 2) { excluded = { receipt: makeReceipt(cand, listMark(cand)) }; break; }
+      }
+    }
+  }
+  if (!excluded) {
+    for (const s of sentences) {
+      if (s.text !== restrictedSentence && EXCLUDE_RE.test(s.text) && placeCount(s.text) >= 2) {
+        excluded = { receipt: makeReceipt(s.text, listMark(s.text)) };
+        break;
+      }
+    }
+  }
+
+  // Special conditions: membership, enrolment, employment, accounts — and short "Eligibility: …" lines.
+  const conditions = [];
+  for (const line of lines) {
+    const m = /^\W*eligibility\s*[:\-]\s*(.{3,120})$/i.exec(line);
+    if (m && !/(?:criteria|requirements)/i.test(m[1])) {
+      conditions.push({ text: `Eligibility: ${m[1].trim()}`, receipt: makeReceipt(line, [line.indexOf(m[1]), line.indexOf(m[1]) + m[1].length]) });
+      break;
+    }
+  }
+  for (const s of sentences) {
+    if (conditions.length >= 3) break;
+    if (CONDITION_SKIP.test(s.text)) continue;
+    for (const re of CONDITION_RES) {
+      const m = re.exec(s.text);
+      if (m) {
+        const text = m[0].trim().replace(/\s+/g, ' ');
+        const clause = text.length > 160 ? text.slice(0, 157).replace(/\s+\S*$/, '') + '…' : text;
+        if (!conditions.some((c) => c.receipt.quote === makeReceipt(s.text, '').quote)) {
+          conditions.push({ text: clause.charAt(0).toUpperCase() + clause.slice(1), receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]) });
+        }
+        break;
+      }
+    }
+  }
+
+  let overviewNote = null;
+  for (const s of sentences) {
+    const m = /excluding standard exceptions/i.exec(s.text);
+    if (m) { overviewNote = { receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]) }; break; }
+  }
+
+  return { minAge, excluded, restrictedTo, conditions, overviewNote };
 }
 
 /** "Registration Period: A – B", "Judging Period: …", "Winners Announced: …". */

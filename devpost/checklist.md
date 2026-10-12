@@ -20,7 +20,7 @@ Build mode: fast. Chosen under the delegation brief because the learner is an ex
   Learner check: Run `npm start`, open http://localhost:5173, paste the Rules tab of Build With AI: Basics, press Decode, and check the deadline says 2:30 AM IST on Tue 27 Oct. Open its receipt.
   Commit: `Decode deadline into your time zone with receipts`
 
-- [ ] **2. See whether you can enter: an eligibility verdict against your details**
+- [x] **2. See whether you can enter: an eligibility verdict against your details**
   Becomes usable: A Your details strip (country, age, time zone, INR rate) saved in the browser, and an eligibility block with age, country and special-condition rows plus an overall badge, each row with a receipt.
   Why now: "Can I even enter?" is the second question a student asks. It also exercises the profile to verdict wiring that the saved list reuses.
   PRD ref: `prd.md > Eligibility verdict`, `prd.md > The Core Journey` (step 2, 4.4)
@@ -84,3 +84,4 @@ Activity mode: [pending]
 ## Revisions
 
 - Slice 1 verification (agent): `npm test` 19/19 passed. In the browser pane, the real *Build With AI: Basics* Rules page (local copy, not committed) decoded to "Tue, 27 Oct 2026 / 2:30 AM IST", "Page says: Oct 26, 2026 @ 5:00pm EDT", with date-shift and late-night notes, a live countdown and receipts. A probe over 12 real rules pages in `_Oct2026_rules/` found the correct deadline in all 12, including PDT/PST across the DST change, MSK, UTC and IST. The browser reported the legacy zone name `Asia/Calcutta`, so `detectTimeZone()` now maps legacy names to canonical ones (`Asia/Kolkata`).
+- Slice 2 verification (agent): `npm test` 30/30 passed. In the browser, the real Build With AI rules showed "Looks eligible" for India at age 20. Changing the country to Brazil flipped it to "Not eligible: Brazil is listed as excluded", and the profile persisted in localStorage. On the real pages the build found what the plan hadn't assumed: (1) Devpost's exclusion sentence mentions "the laws of the United States" and "the U.S. Treasury", which would wrongly exclude US students, so those phrases are now ignored when matching; (2) YouCam excludes Italy and China, and GitLab excludes China, both now caught; (3) prize-category sentences ("Submissions from teams with … a currently enrolled student") were being read as entry conditions and are now skipped; (4) "aged 14 and above" and short "Eligibility: ALL students" lines were added as patterns. The receipt for the excluded-countries row now highlights the list itself.
