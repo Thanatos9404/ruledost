@@ -198,6 +198,44 @@ export function prizeEl(prize, { inrPerUsd, formatMoney, convertPrize }) {
 }
 
 /**
+ * My hackathons: cards sorted by real deadline. ctx = { profile, now, verdictFor(entry), onOpen(id), onGoDecode() }
+ */
+export function renderSavedList(entries, ctx) {
+  if (!entries.length) {
+    return el('section', { class: 'card empty' },
+      el('p', {}, el('strong', { text: 'Nothing saved yet.' })),
+      el('p', { class: 'hint', text: "Decode a rules page and press Save. It'll show up here, sorted by your real deadline." }),
+      el('p', {}, el('button', { type: 'button', class: 'btn btn-primary', onClick: ctx.onGoDecode, text: 'Decode a rules page' })));
+  }
+  const tz = ctx.profile.timeZone;
+  return el('section', { 'aria-label': 'Saved hackathons' },
+    el('div', { class: 'saved-head' },
+      el('h2', { text: 'My hackathons' }),
+      el('p', { class: 'hint', text: `Sorted by your real deadline · times in ${formatPieces(ctx.now, tz).zone}` })),
+    el('ul', { class: 'saved-list' }, entries.map((e) => {
+      const reqs = e.requirements || [];
+      const doneCount = reqs.filter((r) => e.done && e.done[r.id]).length;
+      const cd = e.deadline ? countdown(e.deadline.utc, ctx.now) : null;
+      const verdict = ctx.verdictFor(e);
+      const bar = el('span');
+      bar.style.width = reqs.length ? `${Math.round((doneCount / reqs.length) * 100)}%` : '0%';
+      const when = e.deadline ? (() => { const p = formatPieces(e.deadline.utc, tz); return `${p.date}, ${p.time} ${p.zone}`; })() : 'No deadline found';
+      return el('li', {}, el('button', {
+        type: 'button', class: 'saved-card' + (cd && cd.past ? ' closed' : ''), onClick: () => ctx.onOpen(e.id),
+        'aria-label': `${e.name}, deadline ${when}. Open`,
+      },
+      el('span', { class: 'sc-name', text: e.name }),
+      el('span', { class: 'sc-when', text: when }),
+      el('span', { class: 'sc-meta' },
+        cd ? el('span', { class: 'countdown' + (cd.past ? ' past' : ''), dataset: { countdown: String(e.deadline.utc) }, text: cd.past ? cd.label : `${cd.label} left` }) : null,
+        badgeEl(verdict),
+        reqs.length ? el('span', { text: `${doneCount}/${reqs.length} done` }) : null),
+      reqs.length ? el('span', { class: 'progress', 'aria-hidden': 'true' }, bar) : null));
+    })),
+  );
+}
+
+/**
  * The full ticket. `ctx` = { profile, now, sections: [extra section builders], actions: [nodes],
  * onRename(name) }.
  */

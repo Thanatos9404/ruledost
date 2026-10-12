@@ -95,7 +95,7 @@ kbd {
 }
 
 /* ---------- layout ---------- */
-main { padding-top: 20px; padding-bottom: 40px; }
+main { padding-top: 20px; padding-bottom: 40px; min-height: calc(100vh - 190px); }
 .decode-grid { display: grid; gap: 20px; grid-template-columns: 1fr; }
 @media (min-width: 900px) {
   .decode-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); align-items: start; }

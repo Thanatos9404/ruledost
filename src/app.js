@@ -1,22 +1,52 @@
-// Wiring: events, state, the countdown timer.
+// Wiring: events, state, tabs, saving, downloads and the countdown timer.
 
 import { decodeRules } from './lib/extract.js';
 import { judge } from './lib/judge.js';
-import { createStore } from './lib/store.js';
+import { createStore, sortByDeadline } from './lib/store.js';
+import { buildIcs, slugify } from './lib/ics.js';
 import { COUNTRIES } from './lib/countries.js';
 import { COMMON_ZONES, detectTimeZone, countdown, isValidTimeZone } from './lib/time.js';
 import { formatMoney, convertPrize } from './lib/money.js';
-import { el, renderTicket, renderExplainer, eligibilityEl, badgeEl, checklistEl, prizeEl } from './ui/render.js';
+import {
+  el, renderTicket, renderExplainer, eligibilityEl, badgeEl, checklistEl, prizeEl, renderSavedList,
+} from './ui/render.js';
 
 const $ = (id) => document.getElementById(id);
 
 const store = createStore(window.localStorage);
 const state = {
   profile: store.loadProfile({ timeZone: detectTimeZone() }),
-  ticket: null,
-  done: {}, // ticks on the current ticket
+  tab: 'decode',
+  ticket: null, // the ticket on the Decode tab
+  done: {}, // ticks on that ticket
+  savedId: null, // set once the Decode ticket has been saved
+  openId: null, // saved entry open on the My hackathons tab
 };
 if (!isValidTimeZone(state.profile.timeZone)) state.profile.timeZone = detectTimeZone();
+
+// ---------- small helpers ----------
+function debounce(fn, ms) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+let toastTimer;
+function toast(text) {
+  const node = $('toast');
+  node.textContent = text;
+  node.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { node.hidden = true; }, 2600);
+}
+
+function download(filename, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = el('a', { href: url, download: filename });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // ---------- Your details ----------
 function fillDetails() {
@@ -41,7 +71,7 @@ function readDetails() {
     inrPerUsd: Number.isFinite(rate) && rate > 0 ? rate : 88,
   };
   store.saveProfile(state.profile);
-  renderResult();
+  render();
 }
 
 function bindDetails() {
@@ -51,9 +81,16 @@ function bindDetails() {
   }
 }
 
-function debounce(fn, ms) {
-  let t;
-  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+// ---------- Tabs ----------
+function setTab(tab) {
+  state.tab = tab;
+  $('panel-decode').hidden = tab !== 'decode';
+  $('panel-saved').hidden = tab !== 'saved';
+  for (const [id, name] of [['tab-decode', 'decode'], ['tab-saved', 'saved']]) {
+    if (tab === name) $(id).setAttribute('aria-current', 'page');
+    else $(id).removeAttribute('aria-current');
+  }
+  render();
 }
 
 // ---------- Decode ----------
@@ -76,28 +113,124 @@ function decode() {
   setMessage('');
   state.ticket = ticket;
   state.done = {};
-  renderResult();
+  state.savedId = null;
+  render();
   if (window.matchMedia('(max-width: 899px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderResult() {
+// ---------- Save / calendar / remove ----------
+function save() {
+  const { entry, created, persisted } = store.saveTicket(state.ticket, state.done);
+  state.savedId = entry.id;
+  state.done = { ...entry.done };
+  updateCount();
+  toast(!persisted ? "Couldn't save for later: your browser is blocking storage. It's kept until you close this tab."
+    : created ? 'Saved to My hackathons' : 'Updated in My hackathons');
+  render();
+}
+
+function addToCalendar(ticket) {
+  const ics = buildIcs(ticket, { now: Date.now() });
+  if (!ics) {
+    toast('No deadline found, so there is nothing to add to a calendar.');
+    return;
+  }
+  download(`${slugify(ticket.name)}-deadline.ics`, ics, 'text/calendar;charset=utf-8');
+  toast('Calendar file downloaded. Open it to add the deadline with reminders.');
+}
+
+function removeSaved(id) {
+  const entry = store.getSaved(id);
+  if (!entry) return;
+  if (!window.confirm(`Remove "${entry.name}" from My hackathons?`)) return;
+  store.removeSaved(id);
+  if (state.savedId === id) state.savedId = null;
+  state.openId = null;
+  updateCount();
+  toast('Removed');
+  render();
+}
+
+function updateCount() {
+  $('saved-count').textContent = String(store.listSaved().length);
+}
+
+// ---------- Rendering ----------
+function ticketSections(getDone, onTick) {
+  return [
+    (t) => eligibilityEl(judge(t.eligibility, state.profile)),
+    (t) => checklistEl(t, { done: getDone(), onTick }),
+    (t) => prizeEl(t.prize, { inrPerUsd: state.profile.inrPerUsd, formatMoney, convertPrize }),
+  ];
+}
+
+function renderDecode() {
   const root = $('result');
   if (!state.ticket) {
     root.replaceChildren(renderExplainer());
     return;
   }
-  const verdict = judge(state.ticket.eligibility, state.profile);
-  root.replaceChildren(renderTicket(state.ticket, {
+  const t = state.ticket;
+  const verdict = judge(t.eligibility, state.profile);
+  root.replaceChildren(renderTicket(t, {
     profile: state.profile,
     now: Date.now(),
     badge: badgeEl(verdict),
-    sections: [
-      () => eligibilityEl(verdict),
-      (t) => checklistEl(t, { done: state.done, onTick: (id, on) => { state.done[id] = on; } }),
-      (t) => prizeEl(t.prize, { inrPerUsd: state.profile.inrPerUsd, formatMoney, convertPrize }),
+    sections: ticketSections(() => state.done, (id, on) => {
+      state.done[id] = on;
+      if (state.savedId) store.updateSaved(state.savedId, { done: { ...state.done } });
+    }),
+    onRename: (name) => {
+      t.name = name;
+      if (state.savedId) store.updateSaved(state.savedId, { name });
+    },
+    actions: [
+      el('button', { type: 'button', class: 'btn btn-primary', onClick: save, text: state.savedId ? 'Saved ✓ (save again)' : 'Save to My hackathons' }),
+      el('button', { type: 'button', class: 'btn', onClick: () => addToCalendar(t), text: 'Add to calendar (.ics)', disabled: !t.deadline }),
     ],
-    onRename: (name) => { state.ticket.name = name; },
   }));
+}
+
+function renderSaved() {
+  const root = $('saved-root');
+  const now = Date.now();
+  const entry = state.openId ? store.getSaved(state.openId) : null;
+  if (entry) {
+    const verdict = judge(entry.eligibility, state.profile);
+    root.replaceChildren(
+      el('p', { class: 'back' }, el('button', { type: 'button', class: 'btn btn-small', onClick: () => { state.openId = null; render(); }, text: '← All hackathons' })),
+      renderTicket(entry, {
+        profile: state.profile,
+        now,
+        badge: badgeEl(verdict),
+        sections: ticketSections(() => entry.done || {}, (id, on) => {
+          entry.done = { ...(entry.done || {}), [id]: on };
+          store.updateSaved(entry.id, { done: entry.done });
+          if (state.savedId === entry.id) state.done = { ...entry.done };
+        }),
+        onRename: (name) => { store.updateSaved(entry.id, { name }); },
+        actions: [
+          el('button', { type: 'button', class: 'btn btn-primary', onClick: () => addToCalendar(entry), text: 'Add to calendar (.ics)', disabled: !entry.deadline }),
+          el('span', { class: 'spacer' }),
+          el('button', { type: 'button', class: 'btn btn-quiet', onClick: () => removeSaved(entry.id), text: 'Remove' }),
+        ],
+      }),
+    );
+    return;
+  }
+  state.openId = null;
+  root.replaceChildren(renderSavedList(sortByDeadline(store.listSaved(), now), {
+    profile: state.profile,
+    now,
+    verdictFor: (e) => judge(e.eligibility, state.profile),
+    onOpen: (id) => { state.openId = id; render(); window.scrollTo({ top: 0 }); },
+    onGoDecode: () => setTab('decode'),
+  }));
+}
+
+function render() {
+  if (state.tab === 'decode') renderDecode();
+  else renderSaved();
 }
 
 // ---------- Countdown ----------
@@ -118,7 +251,10 @@ function start() {
   $('rules').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); decode(); }
   });
-  renderResult();
+  $('tab-decode').addEventListener('click', () => setTab('decode'));
+  $('tab-saved').addEventListener('click', () => { state.openId = null; setTab('saved'); });
+  updateCount();
+  setTab('decode');
   setInterval(tick, 1000);
 }
 
