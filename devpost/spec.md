@@ -140,7 +140,10 @@ Devpost_BuildWithAI_Basics/
 │   └── lib/
 │       ├── text.js         # normalise, split lines/sentences, makeReceipt
 │       ├── time.js         # zone table, date/time parsing, UTC conversion, formatting
-│       ├── extract.js      # decodeRules(): name, deadline, key dates, eligibility, checklist, prize
+│       ├── extract.js      # decodeRules(): name, deadline, key dates, eligibility (calls requirements.js)
+│       ├── requirements.js # checklist detectors, other "must" lines, prize   (added in build: see checklist Revisions)
+│       ├── countries.js    # country list, aliases, "is X named in this sentence?" (added in build)
+│       ├── money.js        # USD/INR formatting and conversion (added in build)
 │       ├── judge.js        # eligibility verdict against the profile
 │       ├── ics.js          # .ics calendar text builder
 │       └── store.js        # localStorage wrapper with in-memory fallback
@@ -148,8 +151,11 @@ Devpost_BuildWithAI_Basics/
 │   ├── time.test.mjs       # zone + date parsing + conversion
 │   ├── extract.test.mjs    # decoder on synthetic Devpost-style fixtures and samples
 │   ├── judge.test.mjs      # verdict rules
+│   ├── requirements.test.mjs # checklist detectors, other musts, prize (added in build)
+│   ├── samples.test.mjs    # both fictional samples decode as designed (added in build)
 │   ├── ics.test.mjs        # escaping, folding, alarms
-│   └── store.test.mjs      # upsert, sort, blocked-storage fallback
+│   ├── store.test.mjs      # upsert, sort, blocked-storage fallback
+│   └── fixtures.mjs        # synthetic Devpost-shaped rules texts (not copies of real pages)
 ├── scripts/
 │   ├── serve.mjs           # zero-dependency static server (npm start)
 │   └── corpus-check.mjs    # dev tool: decode every .txt in a folder and print a summary

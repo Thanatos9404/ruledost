@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RuleDost App Map</title>
+<style>
+  :root {
+    --paper: #FBF8F1; --card: #FFFFFF; --ink: #1C1B19; --muted: #6B665C; --line: #E4DDCC;
+    --accent: #E8A317; --accent-strong: #B57A06; --slip: #F4EFE2; --ok: #2F7D4F;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #15140F; --card: #1E1C17; --ink: #F1ECDF; --muted: #ABA392; --line: #36322A;
+      --accent: #F0B53A; --accent-strong: #F6C55E; --slip: #26231C; --ok: #6CC793; color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 1.7rem; margin: 0 0 4px; letter-spacing: -.01em; }
+  h2 { font-size: 1.15rem; margin: 32px 0 10px; }
+  p { margin: 0 0 10px; }
+  .lede { color: var(--muted); }
+  code { font: .88em ui-monospace, "Cascadia Mono", Consolas, monospace; background: var(--slip); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+  .pieces { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); padding: 0; list-style: none; margin: 0; }
+  .pieces li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .pieces strong { display: block; }
+  figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  figcaption { color: var(--muted); font-size: .88rem; margin-top: 6px; }
+  svg { width: 100%; height: auto; display: block; }
+  svg .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+  svg .hot { fill: var(--slip); stroke: var(--accent); stroke-width: 2; }
+  svg text { fill: var(--ink); font: 13px system-ui, sans-serif; }
+  svg .small { fill: var(--muted); font-size: 11.5px; }
+  svg .mono { font: 11.5px ui-monospace, Consolas, monospace; fill: var(--ink); }
+  svg .arrow { stroke: var(--accent-strong); stroke-width: 2; fill: none; marker-end: url(#head); }
+  ol.route { padding-left: 1.3em; display: grid; gap: 12px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  details + details { margin-top: 8px; }
+  summary { cursor: pointer; font-weight: 650; }
+  summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  pre { background: var(--slip); border-top: 2px dashed var(--line); padding: 10px 12px; border-radius: 0 0 6px 6px; overflow-x: auto; font: .82rem/1.5 ui-monospace, Consolas, monospace; margin: 8px 0 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 650; }
+  .note { border-left: 4px solid var(--accent); background: var(--card); padding: 10px 14px; border-radius: 0 10px 10px 0; }
+  footer { color: var(--muted); font-size: .85rem; margin-top: 36px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RuleDost: a map of the app</h1>
+  <p class="lede">A take-home guide to where things live. Snapshot of the code at commit <code>624b2a2</code> (slice 5), 2026-10-12. Code can drift after this, so trust the source over this page.</p>
+
+  <h2>What it is, in four pieces</h2>
+  <ul class="pieces">
+    <li><strong>Decoder</strong> <code>src/lib/extract.js</code>, <code>src/lib/requirements.js</code>: pasted text in, a "ticket" of facts out, each with a receipt.</li>
+    <li><strong>Clock</strong> <code>src/lib/time.js</code>: reads "5:00pm EDT", finds the exact instant, shows it on your clock.</li>
+    <li><strong>Judge</strong> <code>src/lib/judge.js</code>, <code>src/lib/countries.js</code>: your age and country against the eligibility facts.</li>
+    <li><strong>Page</strong> <code>index.html</code>, <code>src/app.js</code>, <code>src/ui/render.js</code>, <code>src/lib/store.js</code>: draws the ticket and saves to <code>localStorage</code>.</li>
+  </ul>
+
+  <h2>One action, followed through the code</h2>
+  <figure>
+    <svg viewBox="0 0 880 250" role="img" aria-labelledby="dtitle dsc">
+      <title id="dtitle">Decode: from pasted text to an IST deadline on screen</title>
+      <desc id="dsc">The Decode button calls decode in app.js, which calls decodeRules in extract.js. findDeadline uses findDateTimes and toUtc in time.js to get an instant. deadlineEl in render.js shows it in the student's time zone with a receipt.</desc>
+      <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C98A0A"/></marker></defs>
+      <rect class="box" x="10" y="30" width="190" height="80" rx="10"/>
+      <text x="24" y="56">You click Decode</text>
+      <text class="small" x="24" y="76">"Deadline: Oct 26, 2026</text>
+      <text class="small" x="24" y="93">@ 5:00pm EDT"</text>
+      <rect class="box" x="240" y="30" width="190" height="80" rx="10"/>
+      <text x="254" y="56">1 · src/app.js</text>
+      <text class="mono" x="254" y="80">decode()</text>
+      <text class="small" x="254" y="98">reads the textarea</text>
+      <rect class="hot" x="470" y="30" width="190" height="80" rx="10"/>
+      <text x="484" y="56">2 · lib/extract.js + time.js</text>
+      <text class="mono" x="484" y="80">findDeadline()</text>
+      <text class="small" x="484" y="98">→ 2026-10-26T21:00Z</text>
+      <rect class="box" x="700" y="30" width="170" height="80" rx="10"/>
+      <text x="714" y="56">3 · ui/render.js</text>
+      <text class="mono" x="714" y="80">deadlineEl()</text>
+      <text class="small" x="714" y="98">your zone + receipt</text>
+      <path class="arrow" d="M200 70 H236"/>
+      <path class="arrow" d="M430 70 H466"/>
+      <path class="arrow" d="M660 70 H696"/>
+      <rect class="box" x="470" y="150" width="400" height="80" rx="10"/>
+      <text x="484" y="176">On screen</text>
+      <text x="484" y="200" font-weight="700">Tue, 27 Oct 2026 · 2:30 AM IST</text>
+      <text class="small" x="484" y="219">+ date-shift and late-night notes, countdown, receipt</text>
+      <path class="arrow" d="M785 110 V146"/>
+      <rect class="box" x="10" y="150" width="420" height="80" rx="10"/>
+      <text x="24" y="176">Also reads (same path, other detectors)</text>
+      <text class="small" x="24" y="198">findEligibility() → judge() · findRequirements()</text>
+      <text class="small" x="24" y="216">findPrize() · saved via store.saveTicket()</text>
+    </svg>
+    <figcaption>Nothing leaves the browser: no server, no AI call, no network request.</figcaption>
+  </figure>
+
+  <h2>The route (reference: three stops)</h2>
+  <p class="note">This is a reference route prepared from the finished code. Yashvardhan hasn't walked it hands-on yet. Open the files in an editor and use the search anchors (function names) to jump to each stop.</p>
+  <ol class="route">
+    <li>
+      <details>
+        <summary>Entry point: <code>src/app.js</code> → <code>decode()</code></summary>
+        <p>Takes the textarea's text. Empty text gives "Paste the rules text first." Otherwise it calls <code>decodeRules(raw, { now })</code>, keeps the ticket in <code>state.ticket</code> and calls <code>render()</code>. If nothing was found it shows the "doesn't look like a rules page" message instead.</p>
+      </details>
+    </li>
+    <li>
+      <details>
+        <summary>Logic: <code>src/lib/extract.js</code> → <code>findDeadline()</code>, then <code>src/lib/time.js</code> → <code>findDateTimes()</code> and <code>toUtc()</code></summary>
+        <p>The deadline is taken first from a "Deadline:" line, then from the end of the "Submission Period", then from a sentence with "deadline" or "due". <code>findDateTimes()</code> reads the date, the time and the zone wording. <code>toUtc()</code> turns the explicit <code>EDT</code> into a fixed −4 h offset (generic wording like "Eastern Time" uses the <code>America/New_York</code> rules instead). The receipt is the source line, with the matched span stored as <code>mark</code>.</p>
+        <pre>"Oct 26, 2026 @ 5:00pm EDT"  →  { y: 2026, m: 10, d: 26, hh: 17, mm: 0, zone: EDT }  →  2026-10-26T21:00:00Z</pre>
+      </details>
+    </li>
+    <li>
+      <details>
+        <summary>Result: <code>src/ui/render.js</code> → <code>deadlineEl()</code></summary>
+        <p><code>formatPieces(utc, profile.timeZone)</code> gives "Tue, 27 Oct 2026" and "2:30 AM IST". <code>dateShift()</code> and <code>isLateNight()</code> add the two notes. <code>receiptEl()</code> builds the collapsible slip with <code>&lt;mark&gt;</code>. Everything goes in as text nodes, never HTML, because pasted text is untrusted.</p>
+      </details>
+    </li>
+  </ol>
+
+  <h2>To change this, start here</h2>
+  <table>
+    <thead><tr><th>You want to…</th><th>Start at</th></tr></thead>
+    <tbody>
+      <tr><td>Support a new time-zone wording (e.g. "WIB")</td><td><code>ZONES</code> in <code>src/lib/time.js</code>, plus a case in <code>tests/time.test.mjs</code></td></tr>
+      <tr><td>Recognise a new checklist item</td><td><code>DETECTORS</code> in <code>src/lib/requirements.js</code> (one function each)</td></tr>
+      <tr><td>Change what counts as "late night"</td><td><code>isLateNight()</code> in <code>src/lib/time.js</code></td></tr>
+      <tr><td>Change verdict wording</td><td><code>judge()</code> and its row builders in <code>src/lib/judge.js</code></td></tr>
+      <tr><td>Change colours or type</td><td>the <code>:root</code> tokens at the top of <code>styles.css</code></td></tr>
+      <tr><td>Change the fictional samples</td><td><code>SAMPLES</code> in <code>src/samples.js</code></td></tr>
+      <tr><td>Default ₹ per US$</td><td><code>DEFAULT_PROFILE</code> in <code>src/lib/store.js</code> and the <code>f-rate</code> input in <code>index.html</code></td></tr>
+    </tbody>
+  </table>
+
+  <h2>A practice to reuse</h2>
+  <p><strong>Turn the acceptance criterion into a test, then check it against real data early.</strong> The PRD criterion "<em>Oct 26, 2026 @ 5:00pm EDT</em> shows as <em>Tue, 27 Oct 2026, 2:30 AM IST</em>" (<code>devpost/prd.md</code> → Deadline in your time zone) became the first test in <code>tests/time.test.mjs</code> and was then checked in the browser. The synthetic fixtures all passed, but running <code>scripts/corpus-check.mjs</code> over 39 real copied rules pages caught three problems they couldn't: US students marked "excluded" because of "U.S. Treasury" boilerplate, a "1-minute clip" minimum read as the video limit, and another project's MIT licence taken as the repo rule. Each fix is recorded under <code>devpost/checklist.md</code> → Revisions. On the next project, write the observable check first, then run it against the messiest real input you can find before trusting it.</p>
+
+  <h2>Run it again</h2>
+  <p><code>npm start</code> → open <code>http://localhost:5173</code> · <code>npm test</code> for the 54 unit tests · <code>npm run corpus -- &lt;folder of copied rules .txt files&gt;</code> for the real-page check. Needs Node 20+ (22+ for <code>npm test</code>). No install step: there are no dependencies.</p>
+
+  <footer>RuleDost app map · generated by Claude Code from the finished code · MIT licence.</footer>
+</main>
+</body>
+</html>

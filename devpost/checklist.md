@@ -71,15 +71,15 @@ Build mode: fast. Chosen under the delegation brief because the learner is an ex
 
 ## Code Tour and App Map
 
-- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap
-- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate
-- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse
+- [ ] Learning activity complete — guided route, focused alternative, prior practice connected, or brief recap. *Pending: Yashvardhan (about 5 minutes with `devpost/app-map.html` open beside the editor).*
+- [ ] Optional edit and transfer reflection addressed — offered/declined/already covered/not applicable as appropriate. *Pending: Yashvardhan.*
+- [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse. *Generated from commit 624b2a2 and checked by the agent in the browser (renders offline, paths and function names verified against the source). Not yet shown to Yashvardhan.*
 
-Activity and evidence: [pending]
-Route and stops: [pending]
-Edit outcome: [pending]
-Reflection: [pending]
-Activity mode: [pending]
+Activity and evidence: Not yet done with the learner. Prepared material: the PRD criterion "Oct 26, 2026 @ 5:00pm EDT → Tue, 27 Oct 2026, 2:30 AM IST" → first test in `tests/time.test.mjs` → browser check. Also the corpus-check findings recorded under Revisions (US-sanctions false positive, "1-minute clip" minimum, other project's MIT licence).
+Route and stops: Reference route only (not toured): `src/app.js` `decode()` → `src/lib/extract.js` `findDeadline()` with `src/lib/time.js` `findDateTimes()`/`toUtc()` → `src/ui/render.js` `deadlineEl()`.
+Edit outcome: Not offered yet.
+Reflection: Not offered yet.
+Activity mode: Pending. Suggested: guided route with the live app and editor.
 
 ## Revisions
 
@@ -90,5 +90,5 @@ Activity mode: [pending]
 - Slice 3 tuning on real pages: a "1-minute clip" minimum (Nebius physical-AI track) was being read as the video limit, so maxima are now preferred and "at least N minutes" is ignored. A gitlab sentence about someone else's MIT-licensed project was taken as the license rule, so sentences about "the repository" now win. Legal and generic boilerplate ("Judges are not required…", "free of charge…", representative clauses) is filtered from the other-must list. Verification (agent): `npm test` 41/41. In the browser, the Build With AI rules show 10 checklist items with receipts, ticks update "x/10 done", and with the Overview pasted too the prize pool reads "$2,500 ≈ ₹2,20,000".
 - Slice 4 verification (agent): `npm test` 51/51. In the browser, the agent saved *Life After Code* and *Build With AI: Basics* and reloaded. My hackathons listed them soonest-first (2:30 AM IST before 6:30 PM IST on 27 Oct) with countdowns, "Looks eligible" badges and "2/10 done". Ticks made after saving persisted, opening a card and ticking persisted, and Remove (confirm) removed it and updated the tab count. The captured .ics had `DTSTART:20261026T210000Z`, the summary, and `-P1D`/`-PT3H` alarms. Importing into Google Calendar is left to the learner check.
 - Slice 5, the spec's useful unknown ("can pattern matching handle real rules pages?"): `npm run corpus -- ../_Oct2026_rules` decoded 39 real Devpost page copies (Rules, Overview and Dates tabs of 13 hackathons). A deadline was found in 39/39. On the 12 Rules pages, every deadline was checked by hand against the stated time and is correct, including the PDT-to-PST change and MSK, UTC and IST. A minimum age was found on 10/12 Rules pages (the other two state none), and the country exclusion list on all 9 Devpost-template pages, which catch Italy (YouCam) and China (GitLab, YouCam). Video and repo rules were found wherever the page states them (Qloo's Rules page has no video rule). Remaining limit: non-template pages (IEEE's emoji bullet lists) give "Check" rows rather than verdicts, which is the designed fallback.
-- Slice 5 bug found: an earlier scripted edit had put two literal backspace characters into the "Eligibility: …" line regex in `extract.js` (a Python `` escape). This silently disabled its "criteria/requirements" guard. It is now fixed, and a full scan found no other control characters. Lesson: make regex edits with the editor, not through shell-escaped scripts.
+- Slice 5 bug found: an earlier scripted edit had put two literal backspace characters into the "Eligibility: …" line regex in `extract.js` (a Python `\b` escape). This silently disabled its "criteria/requirements" guard. It is now fixed, and a full scan found no other control characters. Lesson: make regex edits with the editor, not through shell-escaped scripts.
 - Slice 5 polish: identical period ranges (Registration = Submission) are merged into one key-date row; the header no longer sticks on screens under 900 px; and "Eligibility: …" lines that are really age or residency rules no longer become duplicate conditions. Verification (agent): `npm test` 54/54. In the browser: empty paste, a non-rules paragraph, no deadline, no time zone (assumed-UTC warning) and a closed deadline ("Closed 279 days ago") all show their PRD states. Both samples work (Monsoon: Sat 21 Nov 3:30 AM IST with date-shift and late-night notes; Northern Lights: Not eligible for India). At 375 px in light mode there is no horizontal scroll.
