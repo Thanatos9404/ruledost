@@ -68,7 +68,7 @@ export function Landing() {
       <Hero
         eyebrow={
           <>
-            <ReceiptText size={14} strokeWidth={1.8} className="text-accent" /> Hackathon rules decoder · Built for Build With AI: Basics
+            <ReceiptText size={14} strokeWidth={1.8} className="text-ink" /> Hackathon rules decoder · Built for Build With AI: Basics
           </>
         }
         title="Hackathon fine print, decoded with *receipts*."
@@ -304,7 +304,7 @@ function Pipeline() {
   ];
   return (
     <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-      {steps.map((s, i) => (
+      {steps.map((s) => (
         <div key={s.label} className="flex flex-1 items-center gap-2 sm:flex-col sm:items-stretch">
           <div className="flex flex-1 items-center gap-2.5 rounded-[14px] border border-hair bg-surface px-3.5 py-3 shadow-[var(--shadow-soft)]">
             <span className="grid size-8 place-items-center rounded-full bg-paper-2 text-ink">{s.icon}</span>
@@ -313,7 +313,6 @@ function Pipeline() {
               <span className="block text-[12px] text-muted">{s.sub}</span>
             </span>
           </div>
-          {i < steps.length - 1 && <ArrowRight aria-hidden size={16} strokeWidth={1.7} className="mx-auto hidden shrink-0 text-muted sm:hidden" />}
         </div>
       ))}
     </div>

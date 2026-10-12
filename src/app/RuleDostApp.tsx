@@ -11,6 +11,7 @@ import {
   Hourglass,
   Home,
   ListChecks,
+  PencilLine,
   ScanText,
   ShieldCheck,
   Trash2,
@@ -510,21 +511,8 @@ function TicketPanels({
   return (
     <div className="space-y-4">
       <Panel>
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <input
-            key={ticket.name}
-            defaultValue={ticket.name}
-            aria-label="Hackathon name (editable)"
-            maxLength={120}
-            onBlur={(e) => {
-              const v = e.target.value.trim();
-              if (v && v !== ticket.name) onRename(v);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
-            className="-mx-1.5 min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-0.5 font-display text-[19px] font-semibold tracking-[-0.02em] text-ink outline-none transition-colors hover:bg-paper-2 focus:bg-paper-2"
-          />
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+          <NameEditor name={ticket.name} onRename={onRename} />
           <span className="shrink-0 pt-1">
             <VerdictBadge verdict={verdict} />
           </span>
@@ -553,6 +541,45 @@ function TicketPanels({
           <PrizeBlock prize={ticket.prize} inrPerUsd={profile.inrPerUsd} />
         </Panel>
       </div>
+    </div>
+  );
+}
+
+/** Hackathon name as a wrapping heading; the pencil swaps in an input (Enter saves, Escape cancels). */
+function NameEditor({ name, onRename }: { name: string; onRename: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const commit = (v: string) => {
+    const next = v.trim();
+    if (next && next !== name) onRename(next);
+    setEditing(false);
+  };
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        defaultValue={name}
+        aria-label="Hackathon name"
+        maxLength={120}
+        onBlur={(e) => commit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
+          if (e.key === "Escape") setEditing(false);
+        }}
+        className="min-w-0 flex-1 basis-[220px] rounded-lg border border-ink bg-paper-2 px-2 py-1 font-display text-[19px] font-semibold tracking-[-0.02em] text-ink outline-none"
+      />
+    );
+  }
+  return (
+    <div className="flex min-w-0 flex-1 basis-[220px] items-start gap-1.5">
+      <h2 className="min-w-0 font-display text-[19px] font-semibold leading-snug tracking-[-0.02em] text-ink [overflow-wrap:anywhere]">{name}</h2>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        aria-label="Rename this hackathon"
+        className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-muted transition hover:bg-paper-2 hover:text-ink active:scale-95"
+      >
+        <PencilLine size={15} strokeWidth={1.7} />
+      </button>
     </div>
   );
 }
