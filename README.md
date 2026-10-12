@@ -4,11 +4,11 @@
 
 *"Dost" means friend in Hindi: the friend who actually reads the fine print.*
 
-![RuleDost decoding a fictional hackathon: the deadline "Nov 20, 2026 @ 5:00pm EST" shown as Sat, 21 Nov 2026, 3:30 AM IST with date-shift and late-night warnings](docs/screenshot-desktop.png)
+![RuleDost landing page: "Hackathon fine print, decoded with receipts." above a live preview of the app](docs/screenshots/landing-1440.png)
 
 ## The problem
 
-Most online hackathons that Indian students enter are run from the US. The rules page says *"Deadline: Oct 26, 2026 @ 5:00pm EDT"*, which in Jaipur is **2:30 AM on Tuesday, 27 Oct**. Someone who plans for "Monday the 26th" is cutting it very close. The same pages run to 30 KB of legal text, and eligibility changes from event to event. One event excludes Italy and China, another is "open only to members of program X", a third wants a licence visible in the repo's About section and specific files in the repo.
+Most online hackathons that Indian students enter are run from the US. The rules page says *"Deadline: Oct 26, 2026 @ 5:00pm EDT"*, which in Jaipur is **2:30 AM on Tuesday, 27 Oct**. Someone who plans for "Monday the 26th" is cutting it very close. The 13 rules pages on one student's list for October 2026 stated their deadlines in seven different time-zone labels (MSK, EDT, EST, PDT, PST, UTC, IST). Eligibility also changes from event to event: one excludes Italy and China, another is "open only to members of program X", and a third wants a licence visible in the repo's About section and specific files in the repo.
 
 ## What RuleDost does
 
@@ -18,35 +18,39 @@ Most online hackathons that Indian students enter are run from the US. The rules
 4. **Receipts.** Every row has a *Receipt* toggle that quotes the sentence it came from, with the deciding phrase highlighted, so you can check RuleDost instead of trusting it.
 5. **My hackathons.** Save decoded rules and see them sorted by your real deadline, with countdowns and checklist progress. *Add to calendar* downloads an `.ics` file with reminders 1 day and 3 hours before.
 
-Everything runs in your browser. Nothing you paste is sent anywhere: there is no server, no account and no AI call at runtime. It is pattern matching you can check, by design.
+Decoding runs entirely in your browser. Nothing you paste is sent anywhere: there is no server, no account and no AI call at runtime. It is pattern matching you can check, by design.
 
-![The fictional US-and-Canada-only "Northern Lights Civic Challenge" decoded as Not eligible for a student in India, with the restriction sentence as a receipt](docs/screenshot-not-eligible.png)
+| Decode | Not eligible, with the receipt open | My hackathons |
+|---|---|---|
+| ![Decoded fictional sample with the IST deadline, date-shift and late-night notes](docs/screenshots/app-decode-1440.png) | ![Northern Lights sample: Not eligible for India, with the "open only to" sentence highlighted](docs/screenshots/app-not-eligible-1440.png) | ![Saved hackathons sorted by real deadline with badges and progress](docs/screenshots/app-my-hackathons-1440.png) |
+
+Phone layouts: [landing](docs/screenshots/landing-375.png) · [decode](docs/screenshots/app-decode-375.png) · [My hackathons](docs/screenshots/app-my-hackathons-375.png). There's also a [full landing page](docs/screenshots/landing-full-1440.jpg).
 
 ## Try it locally
 
-Requirements: [Node.js](https://nodejs.org/) 20 or newer (22+ to run the tests). There are no dependencies, so there's nothing to install.
+Requirements: [Node.js](https://nodejs.org/) 20 or newer (22+ to run the tests).
 
 ```bash
 git clone https://github.com/Thanatos9404/ruledost.git
 cd ruledost
-npm start            # → http://localhost:5173
+npm install
+npm run dev          # → http://localhost:5173  (npm start does the same)
 ```
 
-Then either:
-- open a hackathon's **Rules** page, press <kbd>Ctrl</kbd>+<kbd>A</kbd> and <kbd>Ctrl</kbd>+<kbd>C</kbd>, paste into RuleDost, and press **Decode rules** (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>); or
-- click **Try a sample** for one of two clearly fictional rules pages. You can also open `http://localhost:5173/#sample=monsoon` or `#sample=northern` directly.
+- `/` is the landing page and `/#app` is the app.
+- Open a hackathon's **Rules** page, press <kbd>Ctrl</kbd>+<kbd>A</kbd> and <kbd>Ctrl</kbd>+<kbd>C</kbd>, paste into RuleDost, and press **Decode rules** (or <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).
+- Or open a clearly fictional sample: `/#sample=monsoon` (a global hackathon with a late-night IST deadline) or `/#sample=northern` (a US-and-Canada-only challenge that comes back *Not eligible* for India).
+- Fill in *Your details* (country, age, time zone, ₹ per US$) to get the eligibility verdict. They are saved in this browser only.
 
-Fill in *Your details* (country, age, time zone, ₹ per US$) to get the eligibility verdict. They are saved in this browser only.
-
-> The page uses ES modules, which browsers won't load from `file://`. Use `npm start` (or any static server) rather than double-clicking `index.html`.
+Production build: `npm run build` writes a static site to `dist/`, and `npm run preview` serves it.
 
 ## Tests
 
 ```bash
-npm test             # 54 unit tests, Node's built-in runner, no dependencies
+npm test             # 54 unit tests on the decoder, Node's built-in runner
 ```
 
-The tests cover time-zone parsing and conversion (EDT/EST/PT across DST, UTC offsets, MSK, IST, missing years), deadline and key-date extraction, eligibility (age, excluded and restricted countries, aliases such as "U.S."), checklist detectors, prize and INR formatting, storage (upsert, sorting, blocked storage) and `.ics` output (escaping, 75-octet folding, alarms).
+The tests cover time-zone parsing and conversion (EDT/EST/PT across DST, UTC offsets, MSK, IST, missing years), deadline and key-date extraction, eligibility (age, excluded and restricted countries, aliases such as "U.S."), checklist detectors, prize and INR formatting, storage (upsert, sorting, blocked storage) and `.ics` output (escaping, 75-octet folding, alarms). `npm run build` also type-checks the whole React app (TypeScript strict).
 
 ### Checking against real rules pages
 
@@ -58,16 +62,17 @@ This prints what RuleDost finds in each file. During the build it was run on 39 
 
 ## How it works
 
-| Piece | File | Job |
+| Piece | Files | Job |
 |---|---|---|
-| Decoder | `src/lib/extract.js`, `src/lib/requirements.js` | Pasted text → a "ticket" of facts, each with a receipt |
+| Decoder | `src/lib/extract.js`, `src/lib/requirements.js`, `src/lib/text.js` | Pasted text → a "ticket" of facts, each with a receipt |
 | Clock | `src/lib/time.js` | Reads dates, times and zone wordings; converts to one exact instant with the built-in `Intl` time-zone data |
 | Judge | `src/lib/judge.js`, `src/lib/countries.js` | Compares eligibility facts with your age and country |
-| Page | `index.html`, `styles.css`, `src/app.js`, `src/ui/render.js` | Draws the ticket (text nodes only, never pasted HTML) |
-| Storage | `src/lib/store.js` | Profile and saved tickets in `localStorage`, with a memory fallback |
-| Calendar | `src/lib/ics.js` | RFC 5545 `.ics` with two reminders |
+| Storage + calendar | `src/lib/store.js`, `src/lib/ics.js` | Profile and saved tickets in `localStorage` (memory fallback); RFC 5545 `.ics` with two reminders |
+| App | `src/app/RuleDostApp.tsx`, `src/ui/TicketParts.tsx`, `src/ui/Receipt.tsx` | Decode, My hackathons and saved-ticket views in the kit's `AppShell`; receipts rendered as text, never pasted HTML |
+| Landing | `src/landing/Landing.tsx` | Landing page whose previews are the real ticket components on decoded samples |
+| UI kit | `src/kit/` | Shared design kit (see disclosure below) |
 
-A longer walkthrough is in [`devpost/app-map.html`](devpost/app-map.html).
+The decoder is plain JavaScript with no dependencies, and the tests import it directly. The React app imports the same modules, typed via the `.d.ts` files next to them. A longer walkthrough of the code is in [`devpost/app-map.html`](devpost/app-map.html).
 
 **Time-zone notes.** An explicit abbreviation is taken literally (`EDT` = UTC−4 even in winter, because that is what the page says). Generic wording ("Eastern Time", "PT") follows the real daylight-saving rules for that date. Ambiguous abbreviations are read as IST = India, CST = US Central and BST = British Summer Time.
 
@@ -80,16 +85,21 @@ A longer walkthrough is in [`devpost/app-map.html`](devpost/app-map.html).
 
 ## Deploying (optional)
 
-It is a static site with no build step and no environment variables.
-- **Vercel:** import the repo, choose the framework preset *Other*, leave the build command empty and set the output directory to `.`. `vercel.json` adds security headers.
-- **Netlify:** set the publish directory to `.` with no build command.
-- **GitHub Pages:** serve from the repository root.
+It is a static site: `npm run build` produces `dist/`, with no server and no environment variables.
+- **Vercel:** import the repo. `vercel.json` sets the build (`npm run build`), the output directory (`dist`) and security headers, including a Content-Security-Policy that was tested against the production build.
+- **Netlify:** build command `npm run build`, publish directory `dist`.
+- **GitHub Pages:** publish the contents of `dist/`. The build uses relative asset paths and hash routes, so a sub-path works.
 
 ## How it was built
 
-RuleDost was made for **Build With AI: Basics** (Devpost, Sept–Oct 2026), starting from an empty folder with the [Devpost Learn skill pack](https://github.com/challengepost/learn-ai-basics) (`npx skills add challengepost/learn-ai-basics --all -y`). The planning documents that process generated are in [`devpost/`](devpost/): [`scope.md`](devpost/scope.md), [`prd.md`](devpost/prd.md) and [`spec.md`](devpost/spec.md), plus the build checklist [`checklist.md`](devpost/checklist.md). The checklist records each slice and every place the build changed the plan. `skills-lock.json` records the skill-pack version used.
+RuleDost was made for **Build With AI: Basics** (Devpost, Sept–Oct 2026), starting from an empty folder with the [Devpost Learn skill pack](https://github.com/challengepost/learn-ai-basics) (`npx skills add challengepost/learn-ai-basics --all -y`). The planning documents that process generated are in [`devpost/`](devpost/): [`scope.md`](devpost/scope.md), [`prd.md`](devpost/prd.md) and [`spec.md`](devpost/spec.md), plus the build checklist [`checklist.md`](devpost/checklist.md). The checklist records each slice, the later UI rebuild, and every place the build changed the plan. `skills-lock.json` records the skill-pack version used.
 
-**AI disclosure:** the planning documents and code were written with Claude Code (an AI coding agent) working from Yashvardhan's brief, and the docs record which decisions were delegated to the agent. No pre-existing code was reused. There are no third-party runtime libraries.
+**Stack:** React 18, Vite 6, TypeScript, Tailwind CSS v4, Motion, Lenis, Lucide icons, and self-hosted OFL fonts (Open Runde, Inter, Instrument Serif, Fragment Mono, Silkscreen) via Fontsource. Everything is bundled and nothing loads from a CDN.
+
+**Disclosure:**
+- The planning documents and code were written with Claude Code (an AI coding agent) working from Yashvardhan's brief, and the docs record which decisions were delegated to the agent.
+- `src/kit/` is copied unchanged from Yashvardhan's shared design kit for his October 2026 hackathon projects. That kit was created on 12 Oct 2026, during the submission period. Its visual language is inspired by the obliqq Framer template (style only; no assets copied).
+- No other pre-existing code is included. Third-party packages are listed in `package.json` under their own licences.
 
 ## License
 

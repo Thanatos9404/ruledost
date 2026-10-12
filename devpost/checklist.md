@@ -67,6 +67,7 @@ Build mode: fast. Chosen under the delegation brief because the learner is an ex
 
 ## Final Review
 
+- [ ] Rebuild the UI to a premium standard in React + Vite on the shared design kit, with a landing page plus the app in AppShell, the default palette, and fully offline. The decoder and the 54 tests are kept. *Requested by Yashvardhan on 2026-10-13. Implemented and agent-verified (see Revisions). Waiting for Yashvardhan to retry it.*
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
 ## Code Tour and App Map
@@ -76,7 +77,7 @@ Build mode: fast. Chosen under the delegation brief because the learner is an ex
 - [ ] `devpost/app-map.html` generated from finished code, checked, and shown, including a project-grounded practice to reuse. *Generated from commit 624b2a2 and checked by the agent in the browser (renders offline, paths and function names verified against the source). Not yet shown to Yashvardhan.*
 
 Activity and evidence: Not yet done with the learner. Prepared material: the PRD criterion "Oct 26, 2026 @ 5:00pm EDT → Tue, 27 Oct 2026, 2:30 AM IST" → first test in `tests/time.test.mjs` → browser check. Also the corpus-check findings recorded under Revisions (US-sanctions false positive, "1-minute clip" minimum, other project's MIT licence).
-Route and stops: Reference route only (not toured): `src/app.js` `decode()` → `src/lib/extract.js` `findDeadline()` with `src/lib/time.js` `findDateTimes()`/`toUtc()` → `src/ui/render.js` `deadlineEl()`.
+Route and stops: Reference route only (not toured), updated after the React rebuild: `src/app/RuleDostApp.tsx` `decodeText()` → `src/lib/extract.js` `findDeadline()` with `src/lib/time.js` `findDateTimes()`/`toUtc()` → `src/ui/TicketParts.tsx` `DeadlineBlock()` (receipts: `src/ui/Receipt.tsx`).
 Edit outcome: Not offered yet.
 Reflection: Not offered yet.
 Activity mode: Pending. Suggested: guided route with the live app and editor.
@@ -94,3 +95,16 @@ Activity mode: Pending. Suggested: guided route with the live app and editor.
 - Slice 5 polish: identical period ranges (Registration = Submission) are merged into one key-date row; the header no longer sticks on screens under 900 px; and "Eligibility: …" lines that are really age or residency rules no longer become duplicate conditions. Verification (agent): `npm test` 54/54. In the browser: empty paste, a non-rules paragraph, no deadline, no time zone (assumed-UTC warning) and a closed deadline ("Closed 279 days ago") all show their PRD states. Both samples work (Monsoon: Sat 21 Nov 3:30 AM IST with date-shift and late-night notes; Northern Lights: Not eligible for India). At 375 px in light mode there is no horizontal scroll.
 - Post-build review (agent): in a reopened saved ticket, the "x/y done" counter read a stale copy of the ticks after the second tick. The saved view now mutates one ticks object in place. Verified in the browser (three ticks → 5/10, untick → 2/10, storage matches).
 - Ship prep: added a `#sample=<id>` deep link (for example `index.html#sample=northern`) so a deployed demo or the README can open a sample directly. It reuses the existing sample flow and adds no new scope. README screenshots (`docs/`) were taken with local headless Edge from those links. The required-tech detector now also accepts a plain "must use / integrate / leverage …" (the Northern Lights sample's "must use at least one city open-data API" was falling through to other-musts).
+- UI rebuild (Yashvardhan's request, 2026-10-13). The vanilla page (`index.html` + `styles.css` + `src/app.js` + `src/ui/render.js` + `scripts/serve.mjs`) was replaced by React 18 + Vite 6 + Tailwind v4 on the shared kit, copied unchanged into `src/kit/`. It has a landing page (`src/landing/`) and the app in `AppShell` (`src/app/`), with shared ticket components in `src/ui/`. The decoder in `src/lib/` is unchanged apart from two wording tweaks in `judge.js` ("Add your age in Your details…", because the details panel is no longer "above"). It is typed for TypeScript through `.d.ts` files, and `npm test` still runs 54/54.
+
+  What the rebuild ran into:
+  1. The kit's `SearchPill` is not controlled, and its `AppShell` has no navigation below 768px. Following the kit conventions, I added a controlled `SearchField` and a `MobileTabBar` in `src/app/parts.tsx`.
+  2. An editable name input in the Panel title slot forced a 535px layout on phones. It was replaced by a wrapping heading with a rename button.
+  3. Testing the CSP against the production build showed that Vite inlines tiny font subsets as `data:` URIs, so `font-src` includes `data:`.
+  4. The first decode lazily loads font files from the site itself (the second decode makes 0 requests). So the landing stat says "Sent to a server: 0 bytes" instead of "0 network requests".
+  5. Dark mode is dropped, because the design system's daylight theme is light only (`prd.md > Look and Feel` updated).
+
+  Verification (agent):
+  - `tsc -b` and `vite build` pass, and `npm test` passes 54/54.
+  - In the browser: decode of both samples, Save, ticks persisting after save, rename, My hackathons (filters, search, open, remove), and `.ics` capture (`DTSTART:20261205T075900Z`, both alarms). No horizontal scroll at 375px.
+  - Gallery screenshots were saved in `docs/screenshots/` at 1440px and 375px.

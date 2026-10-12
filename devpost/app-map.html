@@ -52,37 +52,37 @@
 <body>
 <main>
   <h1>RuleDost: a map of the app</h1>
-  <p class="lede">A take-home guide to where things live. Snapshot of the code at commit <code>624b2a2</code> (slice 5), 2026-10-12. Code can drift after this, so trust the source over this page.</p>
+  <p class="lede">A take-home guide to where things live. Snapshot of the code after the React rebuild, 2026-10-13 (first written at slice 5, commit <code>624b2a2</code>). Code can drift after this, so trust the source over this page.</p>
 
   <h2>What it is, in four pieces</h2>
   <ul class="pieces">
     <li><strong>Decoder</strong> <code>src/lib/extract.js</code>, <code>src/lib/requirements.js</code>: pasted text in, a "ticket" of facts out, each with a receipt.</li>
     <li><strong>Clock</strong> <code>src/lib/time.js</code>: reads "5:00pm EDT", finds the exact instant, shows it on your clock.</li>
     <li><strong>Judge</strong> <code>src/lib/judge.js</code>, <code>src/lib/countries.js</code>: your age and country against the eligibility facts.</li>
-    <li><strong>Page</strong> <code>index.html</code>, <code>src/app.js</code>, <code>src/ui/render.js</code>, <code>src/lib/store.js</code>: draws the ticket and saves to <code>localStorage</code>.</li>
+    <li><strong>App</strong> <code>src/app/RuleDostApp.tsx</code>, <code>src/ui/TicketParts.tsx</code>, <code>src/ui/Receipt.tsx</code>, <code>src/lib/store.js</code>: React views on the shared kit in <code>src/kit/</code>. They draw the ticket and save to <code>localStorage</code>.</li>
   </ul>
 
   <h2>One action, followed through the code</h2>
   <figure>
     <svg viewBox="0 0 880 250" role="img" aria-labelledby="dtitle dsc">
       <title id="dtitle">Decode: from pasted text to an IST deadline on screen</title>
-      <desc id="dsc">The Decode button calls decode in app.js, which calls decodeRules in extract.js. findDeadline uses findDateTimes and toUtc in time.js to get an instant. deadlineEl in render.js shows it in the student's time zone with a receipt.</desc>
+      <desc id="dsc">The Decode button calls decodeText in RuleDostApp.tsx, which calls decodeRules in extract.js. findDeadline uses findDateTimes and toUtc in time.js to get an instant. DeadlineBlock in TicketParts.tsx shows it in the student's time zone with a receipt.</desc>
       <defs><marker id="head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#C98A0A"/></marker></defs>
       <rect class="box" x="10" y="30" width="190" height="80" rx="10"/>
       <text x="24" y="56">You click Decode</text>
       <text class="small" x="24" y="76">"Deadline: Oct 26, 2026</text>
       <text class="small" x="24" y="93">@ 5:00pm EDT"</text>
       <rect class="box" x="240" y="30" width="190" height="80" rx="10"/>
-      <text x="254" y="56">1 · src/app.js</text>
-      <text class="mono" x="254" y="80">decode()</text>
+      <text x="254" y="56">1 · app/RuleDostApp.tsx</text>
+      <text class="mono" x="254" y="80">decodeText()</text>
       <text class="small" x="254" y="98">reads the textarea</text>
       <rect class="hot" x="470" y="30" width="190" height="80" rx="10"/>
       <text x="484" y="56">2 · lib/extract.js + time.js</text>
       <text class="mono" x="484" y="80">findDeadline()</text>
       <text class="small" x="484" y="98">→ 2026-10-26T21:00Z</text>
       <rect class="box" x="700" y="30" width="170" height="80" rx="10"/>
-      <text x="714" y="56">3 · ui/render.js</text>
-      <text class="mono" x="714" y="80">deadlineEl()</text>
+      <text x="714" y="56">3 · ui/TicketParts.tsx</text>
+      <text class="mono" x="714" y="80">DeadlineBlock()</text>
       <text class="small" x="714" y="98">your zone + receipt</text>
       <path class="arrow" d="M200 70 H236"/>
       <path class="arrow" d="M430 70 H466"/>
@@ -105,8 +105,8 @@
   <ol class="route">
     <li>
       <details>
-        <summary>Entry point: <code>src/app.js</code> → <code>decode()</code></summary>
-        <p>Takes the textarea's text. Empty text gives "Paste the rules text first." Otherwise it calls <code>decodeRules(raw, { now })</code>, keeps the ticket in <code>state.ticket</code> and calls <code>render()</code>. If nothing was found it shows the "doesn't look like a rules page" message instead.</p>
+        <summary>Entry point: <code>src/app/RuleDostApp.tsx</code> → <code>decodeText()</code></summary>
+        <p>Takes the textarea's text. Empty text gives "Paste the rules text first." Otherwise it calls <code>decodeRules(text, { now })</code> and stores the ticket with <code>setTicket()</code>, and React re-renders the panels. If nothing was found, the paste panel shows the "doesn't look like a rules page" message with a sample button instead.</p>
       </details>
     </li>
     <li>
@@ -118,8 +118,8 @@
     </li>
     <li>
       <details>
-        <summary>Result: <code>src/ui/render.js</code> → <code>deadlineEl()</code></summary>
-        <p><code>formatPieces(utc, profile.timeZone)</code> gives "Tue, 27 Oct 2026" and "2:30 AM IST". <code>dateShift()</code> and <code>isLateNight()</code> add the two notes. <code>receiptEl()</code> builds the collapsible slip with <code>&lt;mark&gt;</code>. Everything goes in as text nodes, never HTML, because pasted text is untrusted.</p>
+        <summary>Result: <code>src/ui/TicketParts.tsx</code> → <code>DeadlineBlock()</code></summary>
+        <p><code>formatPieces(utc, profile.timeZone)</code> gives "Tue, 27 Oct 2026" and "2:30 AM IST". <code>dateShift()</code> and <code>isLateNight()</code> add the two notes. <code>ReceiptToggle</code> and <code>Slip</code> in <code>src/ui/Receipt.tsx</code> unfold the source sentence with <code>&lt;mark&gt;</code>. React renders pasted text as text, never as HTML, because it is untrusted. <code>useNow()</code> re-renders the countdown every second.</p>
       </details>
     </li>
   </ol>
@@ -132,9 +132,9 @@
       <tr><td>Recognise a new checklist item</td><td><code>DETECTORS</code> in <code>src/lib/requirements.js</code> (one function each)</td></tr>
       <tr><td>Change what counts as "late night"</td><td><code>isLateNight()</code> in <code>src/lib/time.js</code></td></tr>
       <tr><td>Change verdict wording</td><td><code>judge()</code> and its row builders in <code>src/lib/judge.js</code></td></tr>
-      <tr><td>Change colours or type</td><td>the <code>:root</code> tokens at the top of <code>styles.css</code></td></tr>
+      <tr><td>Change the accent colour</td><td><code>--accent</code> in <code>src/styles/project.css</code>. The kit tokens in <code>src/kit/</code> are shared, so leave them alone.</td></tr><tr><td>Change landing-page copy</td><td><code>src/landing/Landing.tsx</code></td></tr><tr><td>Change a ticket panel</td><td><code>TicketPanels</code> in <code>src/app/RuleDostApp.tsx</code> and the parts in <code>src/ui/TicketParts.tsx</code></td></tr>
       <tr><td>Change the fictional samples</td><td><code>SAMPLES</code> in <code>src/samples.js</code></td></tr>
-      <tr><td>Default ₹ per US$</td><td><code>DEFAULT_PROFILE</code> in <code>src/lib/store.js</code> and the <code>f-rate</code> input in <code>index.html</code></td></tr>
+      <tr><td>Default ₹ per US$</td><td><code>DEFAULT_PROFILE</code> in <code>src/lib/store.js</code></td></tr>
     </tbody>
   </table>
 
@@ -142,7 +142,7 @@
   <p><strong>Turn the acceptance criterion into a test, then check it against real data early.</strong> The PRD criterion "<em>Oct 26, 2026 @ 5:00pm EDT</em> shows as <em>Tue, 27 Oct 2026, 2:30 AM IST</em>" (<code>devpost/prd.md</code> → Deadline in your time zone) became the first test in <code>tests/time.test.mjs</code> and was then checked in the browser. The synthetic fixtures all passed, but running <code>scripts/corpus-check.mjs</code> over 39 real copied rules pages caught three problems they couldn't: US students marked "excluded" because of "U.S. Treasury" boilerplate, a "1-minute clip" minimum read as the video limit, and another project's MIT licence taken as the repo rule. Each fix is recorded under <code>devpost/checklist.md</code> → Revisions. On the next project, write the observable check first, then run it against the messiest real input you can find before trusting it.</p>
 
   <h2>Run it again</h2>
-  <p><code>npm start</code> → open <code>http://localhost:5173</code> · <code>npm test</code> for the 54 unit tests · <code>npm run corpus -- &lt;folder of copied rules .txt files&gt;</code> for the real-page check. Needs Node 20+ (22+ for <code>npm test</code>). No install step: there are no dependencies.</p>
+  <p><code>npm install</code>, then <code>npm run dev</code> → open <code>http://localhost:5173</code> (landing) or <code>/#app</code> · <code>npm test</code> for the 54 unit tests · <code>npm run build</code> for the static site in <code>dist/</code> · <code>npm run corpus -- &lt;folder of copied rules .txt files&gt;</code> for the real-page check. Needs Node 20+ (22+ for <code>npm test</code>).</p>
 
   <footer>RuleDost app map · generated by Claude Code from the finished code · MIT licence.</footer>
 </main>

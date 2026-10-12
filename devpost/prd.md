@@ -31,19 +31,21 @@ Develops `scope.md > The Core Loop` and `scope.md > What "Working" Looks Like`.
 Success: the student knows when it's really due, whether they can enter, and what to submit, and can show where each answer came from.
 
 ## Screens and Layout
-A single page with two tabs and no routing beyond them.
-- **Decode tab.** On wide screens it has two columns: on the left, *Your details* and the paste box with buttons; on the right, the result ticket. On narrow screens they stack in that order. Before any decode, the right column shows a short "what you'll get" explainer with three bullets.
-- **My hackathons tab.** A single column of saved cards. Clicking a card opens its ticket in the same view, with a "← All hackathons" back link.
-- The footer says: "Runs entirely in your browser. Nothing you paste leaves this page." There's also a link to the source repository.
+*Updated 2026-10-13 after Yashvardhan asked for the UI to be rebuilt on his shared design kit. The behaviours below are unchanged.*
+- **Landing page** (`/`). It explains the problem and the three answers, and its hero shows the real app components on a fictional sample. "Open the app" and "Try a sample" lead into the app.
+- **App** (`/#app`), in a sidebar shell with two views (Decode, My hackathons) and the two fictional samples one click away. On phones, a bottom tab bar replaces the sidebar.
+  - **Decode.** Four summary tiles on top (your deadline, time left, can you enter, checklist progress). On wide screens, the paste box and *Your details* sit on the left and stay in view, and the ticket sits on the right as panels: deadline, eligibility, checklist, key dates, prize. On narrow screens they stack. Before any decode, the ticket area shows a "your decoded rules appear here" explainer with a sample button.
+  - **My hackathons.** Summary tiles, then a list sorted by real deadline with Upcoming, Closed and All filters and a search box. Clicking a row opens its full ticket with a "← All hackathons" back link.
+- The sidebar footer says nothing you paste leaves the browser. The landing footer links to the source repository, the planning docs and the licence.
 
 ## Look and Feel
-Carries forward `scope.md > Inspiration & Identity`.
-- **Metaphor.** The result is a *ticket / admit card*. The deadline is the largest thing on screen, in big tabular numerals. Receipts are styled like printed slips: monospace text, a pale background and a dashed top edge.
-- **Palette (light).** Paper background (#FBF8F1), ink text (#1C1B19), marigold accent (#E8A317) for primary actions and highlights. Verdict colours are leaf green (eligible), amber (check) and brick red (not eligible). Highlights inside receipts use a soft marigold background.
-- **Dark mode** follows the system setting, with the same hues adjusted for contrast.
-- **Type.** The system UI sans-serif for everything, plus a monospace font for receipts. No web fonts, so it stays fast and works offline.
-- **Copy tone.** A helpful senior: short, plain sentences. Verdicts say "Looks eligible" or "Check these", never "Guaranteed".
-- **Avoid:** purple gradients, glassmorphism, emoji walls, and generic "AI app" styling.
+*Updated 2026-10-13: Yashvardhan chose his shared design system (`_design/DESIGN_SYSTEM.md`) with RuleDost's palette row: daylight theme, accent #C9502E, default sky.*
+- **Metaphor kept.** The result is still a ticket. The deadline is the largest thing on screen, in big tabular numerals. Receipts are still printed slips: monospace text, a pale background and a dashed top edge, with the deciding phrase highlighted.
+- **Palette.** Warm paper and white surfaces with ink text and a morning-sky gradient on the landing page. The one burnt-orange accent marks receipt highlights. Verdicts use the system's green/red, and "check" is neutral.
+- **Dark mode dropped.** The design system's daylight theme is light only, so the earlier "follows the system setting" behaviour is no longer offered.
+- **Type.** Open Runde (display), Inter (body), Fragment Mono (receipts and labels), Instrument Serif italic for one or two words per headline, and a pixel wordmark. All fonts are self-hosted, so it still works without a font CDN.
+- **Copy tone.** A helpful senior: short, plain sentences. The greeting is "Namaste". Verdicts say "Looks eligible", "Check these" or "Not eligible", never "Guaranteed".
+- **Avoid:** purple or teal "AI" gradients, glass on every surface, emoji as icons, fake logos and invented numbers.
 
 ## Features and Behavior
 
@@ -125,6 +127,7 @@ All decisions below were made by the AI agent under Yashvardhan's delegation bri
 - **"Age of majority" means 18.** That is correct for India, the target user. The note says it varies elsewhere.
 - **INR at an editable fixed rate (default ₹88/USD).** There are no live FX calls (no network). The rate is labelled and editable.
 - **Verdict wording says "looks eligible", not "eligible".** RuleDost shows evidence and the student decides.
+- **Visual design: Yashvardhan's shared design kit (his decision, 2026-10-13).** He asked for a premium UI rebuilt with React + Vite on that kit, with a landing page and the app shell, using the default palette and kept fully offline. The decoder and its tests were kept as they were.
 
 ## What We're Building
 Everything under **Features and Behavior**, with the states above: paste → decode → ticket with receipts → save → list → tick → calendar, plus two fictional samples.

@@ -32,7 +32,7 @@ He comes back because the list shows all his hackathons sorted by real (local) d
 - **A railway ticket or exam admit card.** The few facts that matter (date, time, are you allowed in, what to bring) are big and impossible to misread.
 - **Receipts.** Evidence quotes look like a printed slip: monospace text with a dashed edge.
 - **Tone: a helpful senior ("dost").** Plain, direct and a little warm, with no legal language and no hype.
-- **Palette:** calm paper-white with ink-dark text, a marigold accent, and green, amber and red for verdicts. It must also work in dark mode.
+- **Palette:** calm paper-white with ink-dark text, one accent, and clear verdict colours. *(Updated 2026-10-13: Yashvardhan moved the visuals onto his shared design kit, daylight theme with a burnt-orange accent; see `prd.md > Look and Feel`.)*
 
 ## Why This Matters to the Learner
 From Yashvardhan's brief: he wants a small, polished, useful app with an India and student angle. His own rules folder for this month is the problem in miniature. The deadline of the hackathon this app is built for ("Oct 26, 2026 @ 5:00pm EDT") is actually 2:30 AM on Oct 27 in Jaipur, so a student reading "Oct 26" could plan for Monday night and still be cutting it close.
