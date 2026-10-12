@@ -1,0 +1,22 @@
+# Personal learning context stays out of commits (Devpost Learn 1-start)
+/devpost/learner-profile.md
+
+# Local credentials: never commit. A secret-free .env.example is fine.
+.env
+.env.*
+!.env.example
+
+# Skill-pack install copies (third-party curriculum; skills-lock.json records what was installed)
+/.agents/
+/agent/
+/.claude/
+
+# Personal submission working notes (the learner writes the final Devpost copy)
+/SUBMISSION.md
+/DEMO_SCRIPT.md
+
+# OS / editor noise
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
