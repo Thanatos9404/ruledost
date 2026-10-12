@@ -1,0 +1,17 @@
+{
+  "name": "ruledost",
+  "version": "1.0.0",
+  "description": "Paste a hackathon's rules: get your real deadline in your time zone, an eligibility verdict and a submission checklist, each with a receipt from the rules.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "author": "Yashvardhan Thanvi",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "corpus": "node scripts/corpus-check.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

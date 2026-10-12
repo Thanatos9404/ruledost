@@ -20,3 +20,6 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Local copies of real rules pages for manual testing (other people's text: never commit)
+/local-corpus/

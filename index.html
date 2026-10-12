@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>RuleDost: hackathon rules, decoded</title>
+  <meta name="description" content="Paste a hackathon's rules. Get your real deadline in your own time zone, an eligibility verdict and a submission checklist, each with a receipt quoted from the rules.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="src/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-head">
+    <div class="wrap head-row">
+      <div class="brand">
+        <img class="logo" src="favicon.svg" alt="" width="36" height="36">
+        <div>
+          <p class="brand-name">RuleDost</p>
+          <p class="tagline">Reads the fine print so you don't miss the deadline.</p>
+        </div>
+      </div>
+      <nav class="tabs" aria-label="Sections">
+        <button type="button" class="tab" id="tab-decode" aria-controls="panel-decode" aria-current="page">Decode</button>
+        <button type="button" class="tab" id="tab-saved" aria-controls="panel-saved">My hackathons <span class="count" id="saved-count">0</span></button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <section id="panel-decode" class="decode-grid" aria-label="Decode a rules page">
+      <div class="col-input">
+        <section class="card details" aria-labelledby="details-h">
+          <h2 id="details-h" class="card-title">Your details</h2>
+          <div class="fields">
+            <label class="field">Country
+              <input id="f-country" list="countries" autocomplete="off" value="India">
+            </label>
+            <label class="field">Age
+              <input id="f-age" type="number" min="5" max="120" inputmode="numeric" placeholder="e.g. 20">
+            </label>
+            <label class="field field-wide">Time zone
+              <select id="f-tz"></select>
+            </label>
+            <label class="field">₹ per US$
+              <input id="f-rate" type="number" min="1" max="1000" step="0.01" inputmode="decimal" value="88">
+            </label>
+          </div>
+          <p class="hint">Saved in this browser only.</p>
+        </section>
+
+        <section class="card paste" aria-labelledby="paste-h">
+          <h2 id="paste-h" class="card-title"><label for="rules">Paste the rules</label></h2>
+          <p class="hint">Open the hackathon's <strong>Rules</strong> page, press <kbd>Ctrl</kbd>+<kbd>A</kbd>, then <kbd>Ctrl</kbd>+<kbd>C</kbd>, and paste it here.</p>
+          <textarea id="rules" rows="11" spellcheck="false" placeholder="Deadline: Oct 26, 2026 @ 5:00pm EDT&#10;…&#10;The Hackathon IS NOT open to: …&#10;…"></textarea>
+          <div class="actions">
+            <button type="button" id="decode" class="btn btn-primary">Decode rules</button>
+            <span class="kbd-hint">or <kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+            <span class="spacer"></span>
+            <div class="sample-wrap" id="sample-wrap"></div>
+          </div>
+          <p id="input-msg" class="msg" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+
+      <div class="col-result" id="result" aria-live="polite"></div>
+    </section>
+
+    <section id="panel-saved" class="saved-panel" aria-label="My hackathons" hidden>
+      <div id="saved-root"></div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap">
+      <p>Runs entirely in your browser. Nothing you paste leaves this page. RuleDost shows evidence, not legal advice: always read the receipts.</p>
+      <p>Open source under the MIT licence · <a href="https://github.com/Thanatos9404/ruledost">Source on GitHub</a></p>
+    </div>
+  </footer>
+
+  <datalist id="countries"></datalist>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
