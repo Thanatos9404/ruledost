@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { CalendarDays, Check, CheckCircle2, CircleHelp, Clock3, Globe2, Hourglass, MoonStar, XCircle } from "lucide-react";
 import type { ReactNode } from "react";
-import { Badge, cn } from "../kit";
+import { cn } from "../kit";
 import { EASE } from "../kit/lib/motion";
 import { countdown, dateShift, formatPieces, isLateNight } from "../lib/time.js";
 import { convertPrize, formatMoney } from "../lib/money.js";
@@ -18,12 +18,18 @@ export function StatusIcon({ status }: { status: Status }) {
 }
 
 export function VerdictBadge({ verdict }: { verdict: Verdict }) {
-  const tone = verdict.badge === "ok" ? "pos" : verdict.badge === "bad" ? "neg" : "neutral";
+  // Same shape as the kit Badge; text is a darker mix of --pos/--neg so 12px labels pass WCAG AA (≥ 4.5:1).
+  const tone =
+    verdict.badge === "ok"
+      ? "bg-[color-mix(in_oklab,var(--pos)_12%,transparent)] text-[color-mix(in_srgb,var(--pos)_62%,black)]"
+      : verdict.badge === "bad"
+        ? "bg-[color-mix(in_oklab,var(--neg)_12%,transparent)] text-[color-mix(in_srgb,var(--neg)_78%,black)]"
+        : "bg-paper-3 text-ink-2";
   return (
-    <Badge tone={tone}>
+    <span className={cn("inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] font-semibold", tone)}>
       <span className="size-1.5 rounded-full bg-current" aria-hidden />
       {verdict.label}
-    </Badge>
+    </span>
   );
 }
 

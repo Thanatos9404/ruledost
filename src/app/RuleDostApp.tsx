@@ -322,10 +322,13 @@ export function RuleDostApp({ hash }: { hash: string }) {
           </p>
         }
       >
+        <h1 className="sr-only">
+          RuleDost: {route.view === "decode" ? "decode a rules page" : route.view === "saved" ? "my hackathons" : entry ? entry.name : "saved hackathon"}
+        </h1>
         {content}
         <div className="h-24 md:hidden" aria-hidden />
       </AppShell>
-      <MobileTabBar items={[...navItems, { id: "home", label: "Site", icon: <Home /> }]} active={active} onNavigate={navigate} />
+      <MobileTabBar items={[navItems[0], { ...navItems[1], label: "Saved" }, { id: "home", label: "Site", icon: <Home /> }]} active={active} onNavigate={navigate} />
       <Toast message={toast} />
     </>
   );
@@ -360,7 +363,7 @@ function DecodeView(props: {
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           icon={<CalendarClock />}
           label="Your deadline"
@@ -394,7 +397,7 @@ function DecodeView(props: {
         />
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-12">
+      <div className="grid gap-4 sm:mt-4 lg:grid-cols-12">
         <div className="space-y-4 lg:sticky lg:top-[88px] lg:col-span-5 lg:self-start">
           <Panel title="Paste the rules" description="Open the hackathon's Rules page, press Ctrl+A then Ctrl+C, and paste it here.">
             <textarea
@@ -637,7 +640,7 @@ function SavedView({
 
   return (
     <>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatTile icon={<Bookmark />} label="Saved" value={saved.length} hint="in this browser" />
         <StatTile icon={<Hourglass />} label="Next deadline" value={next ? shortLeft(next.deadline!.utc, now) : "—"} hint={next ? next.name : "nothing upcoming"} />
         <StatTile icon={<ShieldCheck />} label="Looks eligible" value={`${eligible}/${saved.length}`} tone="pos" delta={eligible === saved.length ? "all" : undefined} hint="for your age and country" />
@@ -649,7 +652,8 @@ function SavedView({
         title="Your hackathons"
         description="Click one to see its full ticket, receipts and checklist."
         action={
-          <Segmented
+          <div className="hidden sm:block">
+            <Segmented
             id="saved-filter"
             value={filter}
             onChange={setFilter}
@@ -659,8 +663,21 @@ function SavedView({
               { value: "all", label: "All" },
             ]}
           />
+          </div>
         }
       >
+        <div className="mb-4 sm:hidden">
+          <Segmented
+            id="saved-filter-mobile"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "upcoming", label: "Upcoming" },
+              { value: "closed", label: "Closed" },
+              { value: "all", label: "All" },
+            ]}
+          />
+        </div>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
