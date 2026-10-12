@@ -230,6 +230,7 @@ function renderSaved() {
   const now = Date.now();
   const entry = state.openId ? store.getSaved(state.openId) : null;
   if (entry) {
+    entry.done = entry.done || {}; // one object, mutated in place, so the "x/y done" counter stays current
     const verdict = judge(entry.eligibility, state.profile);
     root.replaceChildren(
       el('p', { class: 'back' }, el('button', { type: 'button', class: 'btn btn-small', onClick: () => { state.openId = null; render(); }, text: '← All hackathons' })),
@@ -237,9 +238,9 @@ function renderSaved() {
         profile: state.profile,
         now,
         badge: badgeEl(verdict),
-        sections: ticketSections(() => entry.done || {}, (id, on) => {
-          entry.done = { ...(entry.done || {}), [id]: on };
-          store.updateSaved(entry.id, { done: entry.done });
+        sections: ticketSections(() => entry.done, (id, on) => {
+          entry.done[id] = on;
+          store.updateSaved(entry.id, { done: { ...entry.done } });
           if (state.savedId === entry.id) state.done = { ...entry.done };
         }),
         onRename: (name) => { store.updateSaved(entry.id, { name }); },
