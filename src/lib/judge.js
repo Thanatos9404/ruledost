@@ -13,7 +13,7 @@ function ageRow(minAge, profile) {
   }
   const age = Number(profile.age);
   if (!profile.age || !Number.isFinite(age)) {
-    return { id: 'age', status: 'check', title: `Age: at least ${minAge.value}`, detail: `${minAge.note} Add your age above to check.`, receipt: minAge.receipt };
+    return { id: 'age', status: 'check', title: `Age: at least ${minAge.value}`, detail: `${minAge.note} Add your age in Your details to check.`, receipt: minAge.receipt };
   }
   if (age >= minAge.value) {
     return { id: 'age', status: 'ok', title: `Age: at least ${minAge.value}`, detail: `You're ${age}. ${minAge.note}`, receipt: minAge.receipt };
@@ -25,7 +25,7 @@ function countryRows(elig, profile) {
   const country = String(profile.country || '').trim();
   const display = namesFor(country)[0] || country;
   if (!country) {
-    return [{ id: 'country', status: 'check', title: 'Country', detail: 'Add your country above to check.', receipt: (elig.excluded || elig.restrictedTo || {}).receipt || null }];
+    return [{ id: 'country', status: 'check', title: 'Country', detail: 'Add your country in Your details to check.', receipt: (elig.excluded || elig.restrictedTo || {}).receipt || null }];
   }
   const rows = [];
   if (elig.restrictedTo) {

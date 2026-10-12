@@ -23,3 +23,7 @@ Thumbs.db
 
 # Local copies of real rules pages for manual testing (other people's text: never commit)
 /local-corpus/
+
+# Build output
+/dist/
+*.tsbuildinfo

@@ -1,0 +1,10 @@
+import type { Parts } from "./types";
+export function formatPieces(ms: number, tz: string, opts?: { withYear?: boolean }): { date: string; time: string; zone: string };
+export function formatInZone(ms: number, tz: string, opts?: { withZone?: boolean; withYear?: boolean }): string;
+export function dateShift(ms: number, stated: Pick<Parts, "y" | "m" | "d">, tz: string): { shifted: boolean; statedDate: string; localDate: string };
+export function isLateNight(ms: number, tz: string): boolean;
+export function countdown(target: number, now?: number): { past: boolean; label: string; days: number; hours: number; minutes: number; seconds: number };
+export function zoneAbbrev(ms: number, tz: string): string;
+export const COMMON_ZONES: string[];
+export function detectTimeZone(): string;
+export function isValidTimeZone(tz: string): boolean;

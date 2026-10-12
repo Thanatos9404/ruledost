@@ -1,0 +1,4 @@
+/* RuleDost uses the kit's default daylight palette (DESIGN_SYSTEM.md, project table). */
+:root {
+  --accent: #c9502e;
+}
