@@ -36,5 +36,6 @@ test('Northern Lights sample: not eligible for India, eligible-looking for Canad
   assert.equal(v.label, 'Not eligible');
   assert.equal(judge(t.eligibility, { ...india, country: 'Canada' }).badge, 'ok');
   assert.equal(t.eligibility.conditions.length, 0);
+  assert.match(t.requirements.find((r) => r.id === 'tech').detail, /^Use at least one city open-data API/);
   assert.deepEqual([t.prize.kind, t.prize.amount], ['pool', 10000]);
 });

@@ -120,7 +120,7 @@ function files({ sentences }) {
   };
 }
 
-const TECH_RE = /\bmust (?:create|build|develop|use|integrate|leverage|be built|demonstrate use)\b[^.;]{0,140}?\b(?:using|use of|with|on|of|integrat\w*)\b[^.;]{0,90}/i;
+const TECH_RE = /\bmust (?:(?:use|integrate|leverage) (?!the (?:hackathon|submission|official))[^.;]{3,160}|(?:create|build|develop|be built|demonstrate use)\b[^.;]{0,140}?\b(?:using|use of|with|on|of|integrat\w*)\b[^.;]{0,90})/i;
 
 function tech({ sentences }) {
   const s = first(sentences, (t) => TECH_RE.test(t) && !/\b(?:hackathon website|devpost account|submission form)\b/i.test(t));

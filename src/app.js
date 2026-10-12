@@ -291,6 +291,10 @@ function start() {
   $('tab-saved').addEventListener('click', () => { state.openId = null; setTab('saved'); });
   updateCount();
   setTab('decode');
+  // Deep link to a sample, e.g. index.html#sample=monsoon (handy for demos and screenshots).
+  const wanted = /^#sample=([\w-]+)$/.exec(window.location.hash);
+  const sample = wanted && SAMPLES.find((s) => s.id === wanted[1]);
+  if (sample) { $('rules').value = sample.text; decode(); }
   setInterval(tick, 1000);
 }
 
