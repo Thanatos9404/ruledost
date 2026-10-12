@@ -297,6 +297,10 @@ textarea:focus { border-color: var(--accent); }
   font-weight: 600; font-size: .92rem; box-shadow: var(--shadow); max-width: calc(100vw - 32px);
 }
 
+@media (max-width: 899px) {
+  .site-head { position: static; }
+}
+
 @media (max-width: 480px) {
   .head-row { gap: 10px; }
   .tagline { display: none; }

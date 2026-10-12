@@ -7,6 +7,7 @@ import { buildIcs, slugify } from './lib/ics.js';
 import { COUNTRIES } from './lib/countries.js';
 import { COMMON_ZONES, detectTimeZone, countdown, isValidTimeZone } from './lib/time.js';
 import { formatMoney, convertPrize } from './lib/money.js';
+import { SAMPLES } from './samples.js';
 import {
   el, renderTicket, renderExplainer, eligibilityEl, badgeEl, checklistEl, prizeEl, renderSavedList,
 } from './ui/render.js';
@@ -116,6 +117,39 @@ function decode() {
   state.savedId = null;
   render();
   if (window.matchMedia('(max-width: 899px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---------- Samples ----------
+function buildSampleMenu() {
+  const wrap = $('sample-wrap');
+  const menu = el('div', { class: 'sample-menu', id: 'sample-menu', role: 'menu', hidden: true },
+    el('p', { class: 'hint', text: 'Fictional rules pages, written for this demo:' }),
+    SAMPLES.map((s) => el('button', {
+      type: 'button', role: 'menuitem',
+      onClick: () => {
+        $('rules').value = s.text;
+        closeMenu();
+        decode();
+      },
+    }, s.title, el('small', { text: s.blurb }))));
+  const button = el('button', {
+    type: 'button', class: 'btn', id: 'sample-btn', 'aria-haspopup': 'menu', 'aria-expanded': 'false', 'aria-controls': 'sample-menu',
+    onClick: () => (menu.hidden ? openMenu() : closeMenu()),
+  }, 'Try a sample ▾');
+  function openMenu() {
+    menu.hidden = false;
+    button.setAttribute('aria-expanded', 'true');
+    menu.querySelector('button').focus();
+  }
+  function closeMenu() {
+    menu.hidden = true;
+    button.setAttribute('aria-expanded', 'false');
+  }
+  document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) closeMenu(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) { closeMenu(); button.focus(); }
+  });
+  wrap.replaceChildren(button, menu);
 }
 
 // ---------- Save / calendar / remove ----------
@@ -247,6 +281,7 @@ function tick() {
 function start() {
   fillDetails();
   bindDetails();
+  buildSampleMenu();
   $('decode').addEventListener('click', decode);
   $('rules').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); decode(); }

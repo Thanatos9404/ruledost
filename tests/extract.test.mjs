@@ -28,14 +28,14 @@ test('without a header, the deadline is the end of the Submission Period', () =>
   assert.match(t.deadline.stated, /December 4, 2026 \(11:59 pm Pacific Time\)/);
 });
 
-test('key dates: periods with both ends, winners with an inferred year', () => {
+test('key dates: periods with both ends (identical ranges merged), winners with an inferred year', () => {
   const t = decodeRules(DEVPOST_STYLE, { now: NOW });
   const labels = t.keyDates.map((k) => k.label);
-  assert.deepEqual(labels, ['Registration Period', 'Submission Period', 'Judging Period', 'Winners Announced']);
-  const judging = t.keyDates[2];
+  assert.deepEqual(labels, ['Registration Period · Submission Period', 'Judging Period', 'Winners Announced']);
+  const judging = t.keyDates[1];
   assert.equal(new Date(judging.from.utc).toISOString(), '2026-10-27T14:00:00.000Z');
   assert.equal(new Date(judging.to.utc).toISOString(), '2026-10-30T21:00:00.000Z');
-  const winners = t.keyDates[3];
+  const winners = t.keyDates[2];
   assert.equal(winners.to, null);
   assert.equal(new Date(winners.from.utc).toISOString(), '2026-11-04T19:00:00.000Z');
 });

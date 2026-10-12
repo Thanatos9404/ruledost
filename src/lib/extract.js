@@ -239,7 +239,7 @@ export function findEligibility(lines, sentences) {
   const conditions = [];
   for (const line of lines) {
     const m = /^\W*eligibility\s*[:\-]\s*(.{3,120})$/i.exec(line);
-    if (m && !/(?:criteria|requirements)/i.test(m[1])) {
+    if (m && !/\b(?:criteria|requirements)\b/i.test(m[1]) && !RESTRICT_RE.test(m[1]) && !AGE_RES.some((re) => re.test(m[1]))) {
       conditions.push({ text: `Eligibility: ${m[1].trim()}`, receipt: makeReceipt(line, [line.indexOf(m[1]), line.indexOf(m[1]) + m[1].length]) });
       break;
     }
@@ -287,6 +287,9 @@ export function findKeyDates(dated) {
     seen.add(key);
     const from = dateFact(label, e.dates[0], e.line);
     const to = period && e.dates.length >= 2 ? dateFact(label, e.dates[e.dates.length - 1], e.line) : null;
+    // Same range as an earlier period (e.g. Registration = Submission): one row, both labels.
+    const twin = out.find((k) => k.to && to && k.from.utc === from.utc && k.to.utc === to.utc);
+    if (twin) { twin.label = `${twin.label} · ${label}`; continue; }
     out.push({ label, from, to, receipt: makeReceipt(e.line, [m.index, m.index + m[0].length]) });
     if (out.length >= 6) break;
   }
