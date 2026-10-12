@@ -135,6 +135,68 @@ export function eligibilityEl(verdict) {
   );
 }
 
+function receiptsEl(receipts) {
+  const list = (receipts || []).filter(Boolean);
+  if (!list.length) return null;
+  if (list.length === 1) return receiptEl(list[0]);
+  const box = el('details', { class: 'receipt' }, el('summary', {}, `Receipts (${list.length})`));
+  for (const r of list) box.append(receiptEl(r).querySelector('.slip'));
+  return box;
+}
+
+/** The submission checklist. `done` = { [id]: true }, `onTick(id, checked)`. */
+export function checklistEl(ticket, { done = {}, onTick } = {}) {
+  const reqs = ticket.requirements || [];
+  const doneCount = reqs.filter((r) => done[r.id]).length;
+  const counter = el('span', { class: 'hint', text: reqs.length ? `${doneCount}/${reqs.length} done` : '' });
+  const rows = reqs.map((r) => {
+    const box = el('input', {
+      type: 'checkbox', class: 'tick', id: `tick-${r.id}`, checked: Boolean(done[r.id]),
+      'aria-describedby': `detail-${r.id}`,
+    });
+    const li = el('li', { class: 'row' + (done[r.id] ? ' done' : '') },
+      box,
+      el('div', { class: 'row-main' },
+        el('label', { class: 'row-title', for: `tick-${r.id}`, text: r.title }),
+        el('p', { class: 'row-detail', id: `detail-${r.id}`, text: r.detail })),
+      receiptsEl(r.receipts),
+    );
+    box.addEventListener('change', () => {
+      li.classList.toggle('done', box.checked);
+      if (onTick) onTick(r.id, box.checked);
+      const n = reqs.filter((x) => (x.id === r.id ? box.checked : done[x.id])).length;
+      counter.textContent = `${n}/${reqs.length} done`;
+    });
+    return li;
+  });
+  const others = ticket.otherMusts || [];
+  return el('section', { class: 'section', 'aria-label': 'Submission checklist' },
+    el('div', { class: 'section-head' }, el('h3', { class: 'section-title', text: 'What you must submit' }), counter),
+    reqs.length
+      ? el('ul', { class: 'rows' }, rows)
+      : el('p', { class: 'hint', text: "No standard submission requirements recognised. Check the \"must\" lines below and the rules' Requirements section." }),
+    others.length ? el('details', { class: 'other-musts' },
+      el('summary', { text: `Other "must" lines from the rules (${others.length})` }),
+      el('ul', {}, others.map((o) => el('li', {}, el('span', { text: o.text }), receiptEl(o.receipt)))),
+    ) : null,
+  );
+}
+
+/** Prize pool (or top prize) with the other currency alongside. */
+export function prizeEl(prize, { inrPerUsd, formatMoney, convertPrize }) {
+  if (!prize) return null;
+  const other = convertPrize(prize, inrPerUsd);
+  const label = prize.kind === 'pool' ? 'Prize pool' : 'Top prize';
+  return el('section', { class: 'section', 'aria-label': label },
+    el('div', { class: 'section-head' }, el('h3', { class: 'section-title', text: label })),
+    el('p', { class: 'prize' },
+      el('span', { class: 'prize-usd', text: formatMoney(prize.amount, prize.currency) + (prize.plus ? '+' : '') }),
+      el('span', { class: 'prize-inr', text: `≈ ${formatMoney(other.amount, other.currency)}` })),
+    el('p', { class: 'hint', text: `At ₹${inrPerUsd} per US$ (change it in Your details).${prize.kind === 'top' ? ' Paste the Overview page too to see the whole pool.' : ''}` }),
+    receiptEl(prize.receipt),
+  );
+}
+
 /**
  * The full ticket. `ctx` = { profile, now, sections: [extra section builders], actions: [nodes],
  * onRename(name) }.

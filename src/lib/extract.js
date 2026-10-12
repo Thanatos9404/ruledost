@@ -4,6 +4,9 @@
 import { normalize, toLines, toSentences, makeReceipt } from './text.js';
 import { findDateTimes, toUtc } from './time.js';
 import { placeSpans, stripNonListings } from './countries.js';
+import { findRequirements, findOtherMusts, findPrize } from './requirements.js';
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const NAV = /^(log in|sign up|login|join hackathon|join a hackathon|hackathons|projects|overview|rules|resources|devpost|descend|my projects|participants( \(\d+\))?|project gallery|updates|discussions|host a hackathon|blog|help desk|schedule|prizes|judges)$/i;
 
@@ -17,16 +20,29 @@ export function decodeRules(raw, { now = Date.now() } = {}) {
   const deadline = findDeadline(dated);
   const keyDates = findKeyDates(dated);
   const eligibility = findEligibility(lines, sentences);
+
+  const submission = keyDates.find((k) => /submission/i.test(k.label));
+  const submissionStart = submission ? `${MONTH_SHORT[submission.from.parts.m - 1]} ${submission.from.parts.d}, ${submission.from.parts.y}` : null;
+  const ctx = { lines, sentences, submissionStart };
+  const requirements = findRequirements(ctx);
+  const quotes = requirements.flatMap((r) => r.receipts.map((q) => q.quote.replace(/^… | …$/g, '')));
+  const used = new Set(sentences.filter((s) => quotes.some((q) => s.text.includes(q) || q.includes(s.text))).map((s) => s.text));
+  const otherMusts = findOtherMusts(ctx, used);
+  const prize = findPrize(ctx);
+
   const ticket = {
     v: 1,
     name: findName(lines),
     deadline,
     keyDates,
     eligibility,
+    requirements,
+    otherMusts,
+    prize,
   };
   ticket.found = (deadline ? 1 : 0) + keyDates.length
     + (eligibility.minAge ? 1 : 0) + (eligibility.excluded ? 1 : 0) + (eligibility.restrictedTo ? 1 : 0)
-    + eligibility.conditions.length;
+    + eligibility.conditions.length + requirements.length + (prize ? 1 : 0);
   return ticket;
 }
 
@@ -244,10 +260,12 @@ export function findEligibility(lines, sentences) {
     }
   }
 
+  // Devpost Overview pages: "All countries/territories, excluding" / "standard exceptions" (often split over two lines).
   let overviewNote = null;
-  for (const s of sentences) {
-    const m = /excluding standard exceptions/i.exec(s.text);
-    if (m) { overviewNote = { receipt: makeReceipt(s.text, [m.index, m.index + m[0].length]) }; break; }
+  for (let i = 0; i < lines.length && !overviewNote; i++) {
+    const two = `${lines[i]} ${lines[i + 1] || ''}`;
+    const m = /excluding\s+standard exceptions/i.exec(two);
+    if (m && m.index < lines[i].length) overviewNote = { receipt: makeReceipt(two.trim(), [m.index, m.index + m[0].length]) };
   }
 
   return { minAge, excluded, restrictedTo, conditions, overviewNote };

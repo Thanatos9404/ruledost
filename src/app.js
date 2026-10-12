@@ -5,7 +5,8 @@ import { judge } from './lib/judge.js';
 import { createStore } from './lib/store.js';
 import { COUNTRIES } from './lib/countries.js';
 import { COMMON_ZONES, detectTimeZone, countdown, isValidTimeZone } from './lib/time.js';
-import { el, renderTicket, renderExplainer, eligibilityEl, badgeEl } from './ui/render.js';
+import { formatMoney, convertPrize } from './lib/money.js';
+import { el, renderTicket, renderExplainer, eligibilityEl, badgeEl, checklistEl, prizeEl } from './ui/render.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -13,6 +14,7 @@ const store = createStore(window.localStorage);
 const state = {
   profile: store.loadProfile({ timeZone: detectTimeZone() }),
   ticket: null,
+  done: {}, // ticks on the current ticket
 };
 if (!isValidTimeZone(state.profile.timeZone)) state.profile.timeZone = detectTimeZone();
 
@@ -73,6 +75,7 @@ function decode() {
   }
   setMessage('');
   state.ticket = ticket;
+  state.done = {};
   renderResult();
   if (window.matchMedia('(max-width: 899px)').matches) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -88,7 +91,11 @@ function renderResult() {
     profile: state.profile,
     now: Date.now(),
     badge: badgeEl(verdict),
-    sections: [() => eligibilityEl(verdict)],
+    sections: [
+      () => eligibilityEl(verdict),
+      (t) => checklistEl(t, { done: state.done, onTick: (id, on) => { state.done[id] = on; } }),
+      (t) => prizeEl(t.prize, { inrPerUsd: state.profile.inrPerUsd, formatMoney, convertPrize }),
+    ],
     onRename: (name) => { state.ticket.name = name; },
   }));
 }
