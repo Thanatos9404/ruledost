@@ -4,6 +4,8 @@
 
 *"Dost" means friend in Hindi: the friend who actually reads the fine print.*
 
+**Live app:** https://ruledost.vercel.app · **Demo video (2:36):** https://youtu.be/p5daJsw4q28
+
 ![RuleDost landing page: "Hackathon fine print, decoded with receipts." above a live preview of the app](docs/screenshots/landing-1440.png)
 
 ## The problem
